@@ -1,4 +1,5 @@
-book_filename: "bookdownproj"
+book_filename: "eda-diabetes"
+rmd_files: ["index.Rmd", "02-tears.Rmd", "03-race.Rmd"]
 output_dir: docs
 delete_merged_file: true
 edit: https://github.com/danielahernav2006/eda2-diabetes-dataviz.git/edit/main/%s

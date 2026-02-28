@@ -14,7 +14,10 @@ output:
 ---
 
 # EDA
+<<<<<<< HEAD
 
+=======
+>>>>>>> 3f5c873 (Actualizar bookdown completo)
  <style>
  h2{color: darkblue; }
  h1 {color: darkred; }
