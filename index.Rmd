@@ -1,9 +1,3383 @@
 --- 
-title: "YOUR TITLE HERE"
-author: "YOUR NAME HERE"
-date: "`r Sys.Date()`"
+title: "**Análisis Exploratorio de Indicadores de Salud y Factores Asociados a la Diabetes en la Encuesta BRFSS 2015**"
+author: "Daniela Hernández Navas & Valeria Incer Vergara"
+date: "2026-02-27"
 site: bookdown::bookdown_site
+output: 
+  html_document:
+      code_folding: hide
+      toc : true
+      number_sections: false
+      toc_float : true
+      toc_collapsed : true
+      smoth_scroll : true
 ---
 
-# Down the rabbit-hole
 
+ <style>
+ h2{color: darkblue; }
+ h1 {color: darkred; }
+ </style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = TRUE,      # muestra código 
+  message = FALSE,     # oculta mensajes
+  warning = FALSE      # oculta warnings
+)
+
+``` 
+
+## **1. Contexto del dataset**
+
+La diabetes es una de las enfermedades crónicas más prevalentes en los Estados Unidos y representa un problema significativo de salud pública a nivel mundial. Se trata de una condición metabólica caracterizada por la incapacidad del organismo para regular adecuadamente los niveles de glucosa en sangre, ya sea por deficiencia en la producción de insulina o por resistencia a su acción. Esta alteración puede derivar en complicaciones graves como enfermedades cardiovasculares, insuficiencia renal, pérdida de visión y amputaciones, afectando considerablemente la calidad y esperanza de vida de los pacientes.
+
+De acuerdo con los Centros para el Control y la Prevención de Enfermedades (CDC), millones de personas en Estados Unidos padecen diabetes o prediabetes, y una proporción significativa desconoce su condición. Esta situación incrementa el riesgo de complicaciones severas y genera una carga económica sustancial para el sistema de salud, con costos que ascienden a cientos de miles de millones de dólares anuales. La detección temprana y la identificación de factores de riesgo asociados son fundamentales para implementar estrategias preventivas y reducir el impacto clínico y económico de la enfermedad.
+
+El presente analisis utiliza el conjunto de datos Behavioral Risk Factor Surveillance System (BRFSS) 2015, una encuesta telefónica anual realizada por el CDC que recopila información sobre condiciones crónicas, comportamientos de riesgo y acceso a servicios de salud en más de 400.000 individuos. Para este estudio se emplea una versión procesada del dataset que contiene 253.680 observaciones y 21 variables predictoras, donde la variable objetivo indica la presencia o ausencia de diabetes o prediabetes.
+
+
+El análisis exploratorio de datos permitirá comprender la estructura del conjunto de datos, identificar patrones relevantes, evaluar posibles relaciones entre variables y detectar desequilibrios en la variable objetivo. Este proceso es fundamental para garantizar una modelación adecuada y para justificar el uso de técnicas avanzadas de validación y optimización de modelos en etapas posteriores del proyecto.
+
+## **2. Objetivo del análisis**
+
+Explorar y analizar visualmente la relación entre variables demográficas, hábitos de vida y condiciones de salud con la presencia de diabetes en la población adulta de Estados Unidos, utilizando el conjunto de datos BRFSS 2015.
+
+### **2.1 Objetivos específicos**
+- Describir la distribución de la variable objetivo (presencia o ausencia de diabetes).
+- Analizar el comportamiento individual de las variables numéricas y categóricas del conjunto de datos.
+- Identificar patrones visuales y posibles asociaciones entre factores de riesgo (como índice de masa corporal, presión arterial, consumo de alcohol, actividad física, entre otros) y la diabetes.
+- Comparar grupos poblacionales según características como edad, educación, ingreso y sexo.
+- Detectar tendencias, contrastes y relaciones relevantes que aporten comprensión al fenómeno estudiado.
+
+## **3. Propósito del estudio**
+
+El propósito de este análisis exploratorio es comprender cómo diferentes factores relacionados con el estilo de vida, la salud general y las características sociodemográficas se distribuyen en la población y cómo se asocian con la presencia de diabetes. A través de técnicas de visualización de datos, se busca identificar patrones significativos, contrastes entre grupos y posibles factores relevantes que contribuyan a una mejor interpretación del problema desde una perspectiva descriptiva.
+
+## **4. Carga y estructura del dataset**
+
+Para la realización del análisis exploratorio se emplea el lenguaje de programación Python junto con las librerías especializadas en análisis y visualización de datos. Inicialmente, se cargan las librerías necesarias para la manipulación, análisis estadístico y representación gráfica de la información.
+
+Posteriormente, se importa el conjunto de datos BRFSS 2015 desde un archivo en formato CSV, permitiendo su almacenamiento en una estructura tipo DataFrame que facilita la exploración y análisis de las variables. Esta etapa permite verificar la correcta lectura del archivo, reconocer la organización de las columnas y preparar el entorno para las fases posteriores del análisis exploratorio.
+
+```{r, warning=FALSE, message=FALSE}
+#LIBRERÍAS IMPORTANTES
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(forcats)
+library(tibble)
+library(knitr)
+library(kableExtra)
+library(e1071)
+library(patchwork)
+library(gridExtra)
+library(reshape2)
+library(purrr)
+library(scales)
+
+theme_set(theme_minimal())
+
+df <- read_csv("C:/Users/danih/Documents/Dataviz_py/diabetes_binary_health_indicators_BRFSS2015.csv")
+```
+
+### **4.1 Visualización inicial de los datos**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+head(df)
+```
+
+
+### **4.2 Dimensiones**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+dim(df)
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+colnames(df)
+```
+
+El conjunto de datos presenta un total de **253.680 observaciones (filas)** y **22 variables (columnas)**. Cada fila representa un individuo encuestado dentro del sistema BRFSS 2015, mientras que las columnas corresponden a distintos indicadores relacionados con condiciones médicas, hábitos de vida, características sociodemográficas y estado general de salud.
+
+El tamaño del dataset resulta considerablemente amplio, lo que permite realizar un análisis exploratorio robusto y facilita la identificación de patrones y tendencias dentro de la población estudiada. Asimismo, la cantidad de variables disponibles proporciona una visión multidimensional de los factores asociados a la salud, permitiendo analizar diferentes aspectos del bienestar físico y conductual de los individuos.
+
+### **4.3 Estructura**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+glimpse(df)
+```
+
+Aunque todas las variables se encuentran almacenadas como valores numéricos, es importante destacar que varias de ellas representan **variables categóricas binarias u ordinales codificadas numéricamente**. Esta codificación facilita el análisis estadístico y la visualización, pero requiere una interpretación adecuada según el significado conceptual de cada variable.
+
+### **4.4 Clasificación de variables**
+
+Aunque `df.info()` muestra que la mayoría de columnas están almacenadas como valores numéricos, esto no significa que todas deban interpretarse como variables numéricas continuas. En este conjunto de datos, varias columnas representan respuestas categóricas binarias codificadas como 0/1 (por ejemplo, Smoker, HighBP, Stroke), mientras que otras representan escalas ordinales (por ejemplo, GenHlth, Education, Income, Age), donde el orden de los valores tiene significado pero no necesariamente una distancia numérica “real” entre categorías.
+
+Para fines de visualización y análisis exploratorio, clasificamos las variables según su naturaleza conceptual y las convertimos a su tipo adecuado, esto para mejorar la interpretación de gráficos, facilitar cálculos descriptivos y evitar tratamientos incorrectos (por ejemplo, interpretar un 0/1 como una variable continua)Aunque muchas variables aparecen como numéricas (int64), varias de ellas representan categorías binarias (0/1), por lo que conceptualmente son variables categóricas.
+
+#### **4.4.2 Definir variables numéricas, binarias y ordinales**
+
+Se realiza una clasificación conceptual en tres grupos: variables numéricas (magnitud), ordinales (escala ordenada) y binarias (presencia/ausencia). Esta distinción mejora la selección de gráficos y evita interpretaciones incorrectas.
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+Objetivo <- "Diabetes_binary"
+
+binary_cols <- c()
+
+for (col in colnames(df)) {
+  unique_vals <- unique(na.omit(df[[col]]))
+  if (all(unique_vals %in% c(0, 1)) && length(unique_vals) <= 2) {
+    binary_cols <- c(binary_cols, col)
+  }
+}
+
+binary_feature_cols <- setdiff(binary_cols, Objetivo)
+
+numeric_cols <- c("BMI", "MentHlth", "PhysHlth")
+ordinal_cols <- c("GenHlth", "Age", "Education", "Income")
+
+cat("Objetivo:", Objetivo, "\n")
+cat("Numéricas:", numeric_cols, "\n")
+cat("Ordinales:", ordinal_cols, "\n")
+cat("Binarias:", binary_feature_cols, "\n")
+```
+
+#### **4.4.3 Conversión de los tipos**
+
+Con el fin de garantizar coherencia semántica y mejorar la interpretabilidad de las visualizaciones, se realizó una reclasificación conceptual de las variables en una copia del dataset (`df_viz`). Las variables binarias fueron transformadas en categorías con etiquetas descriptivas completas (por ejemplo, “Con hipertensión” / “Sin hipertensión”), evitando el uso genérico de “Sí/No”.
+
+Las variables ordinales (GenHlth, Age, Education e Income) fueron convertidas a categorías ordenadas, preservando su jerarquía natural. Además, los códigos correspondientes a respuestas faltantes o no informadas (por ejemplo, 77 y 99 en Income, 99 en Age) fueron tratados explícitamente como valores perdidos (NA).
+
+Esta transformación no altera la información original, sino que optimiza la claridad analítica y la calidad de las representaciones gráficas, facilitando una interpretación más precisa de los patrones observados en el análisis exploratorio.
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+df_viz <- df
+
+df_viz <- df_viz %>%
+  mutate(
+    Diabetes_binary = factor(
+      Diabetes_binary,
+      levels = c(0, 1),
+      labels = c("Sin diabetes", "Prediabetes / Diabetes")
+    ),
+    HighBP = factor(HighBP, levels = c(0,1), labels = c("Sin hipertensión","Con hipertensión")),
+    HighChol = factor(HighChol, levels = c(0,1), labels = c("Sin colesterol alto","Con colesterol alto")),
+    CholCheck = factor(CholCheck, levels = c(0,1), labels = c("Sin chequeo en 5 años","Con chequeo en 5 años")),
+    Smoker = factor(Smoker, levels = c(0,1), labels = c("No fumador","Fumador")),
+    Stroke = factor(Stroke, levels = c(0,1), labels = c("Sin ACV","Con ACV")),
+    HeartDiseaseorAttack = factor(HeartDiseaseorAttack, levels = c(0,1), labels = c("Sin enfermedad cardíaca","Con enfermedad cardíaca")),
+    PhysActivity = factor(PhysActivity, levels = c(0,1), labels = c("Sin actividad física","Con actividad física")),
+    Fruits = factor(Fruits, levels = c(0,1), labels = c("No consume frutas diario","Consume frutas diario")),
+    Veggies = factor(Veggies, levels = c(0,1), labels = c("No consume verduras diario","Consume verduras diario")),
+    HvyAlcoholConsump = factor(HvyAlcoholConsump, levels = c(0,1), labels = c("No consumo alto alcohol","Consumo alto alcohol")),
+    AnyHealthcare = factor(AnyHealthcare, levels = c(0,1), labels = c("Sin cobertura médica","Con cobertura médica")),
+    NoDocbcCost = factor(NoDocbcCost, levels = c(0,1), labels = c("Sin barrera económica","Con barrera económica")),
+    DiffWalk = factor(DiffWalk, levels = c(0,1), labels = c("Sin dificultad al caminar","Con dificultad al caminar")),
+    Sex = factor(Sex, levels = c(0,1), labels = c("Mujer","Hombre"))
+  )
+
+df_viz <- df_viz %>%
+  mutate(
+    GenHlth = factor(
+      GenHlth,
+      levels = c(1,2,3,4,5),
+      labels = c("Excelente","Muy buena","Buena","Regular","Mala"),
+      ordered = TRUE
+    )
+  )
+
+df_viz <- df_viz %>%
+  mutate(
+    Age = na_if(Age, 99),
+    Age = factor(
+      Age,
+      levels = 1:13,
+      labels = c("18–24","25–29","30–34","35–39","40–44","45–49","50–54","55–59","60–64","65–69","70–74","75–79","80+"),
+      ordered = TRUE
+    )
+  )
+
+df_viz <- df_viz %>%
+  mutate(
+    Education = factor(
+      Education,
+      levels = 1:6,
+      labels = c("Nunca asistió","Primaria incompleta","Secundaria incompleta","Secundaria completa / GED","Universidad incompleta","Universidad completa"),
+      ordered = TRUE
+    )
+  )
+
+df_viz <- df_viz %>%
+  mutate(
+    Income = na_if(Income, 77),
+    Income = na_if(Income, 99),
+    Income = factor(
+      Income,
+      levels = 1:8,
+      labels = c("< $10,000","$10,000–15,000","$15,000–20,000","$20,000–25,000","$25,000–35,000","$35,000–50,000","$50,000–75,000","$75,000+"),
+      ordered = TRUE
+    )
+  )
+
+glimpse(df_viz)
+typeof(df_viz$Sex)
+```
+
+#### **4.4.4 Diccionario de datos/Operacionalización de las variables**
+
+Con el fin de documentar el conjunto de datos y facilitar la interpretación de las visualizaciones, se construyó un diccionario de datos que resume para cada variable su rol (objetivo o característica), su tipo conceptual (binaria, numérica u ordinal), su codificación y una breve descripción basada en el codebook del BRFSS.
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+data_dictionary <- list(
+  list(
+    Variable = "Diabetes_binary",
+    Rol = "Target",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "Sin diabetes / Prediabetes–Diabetes",
+    `Descripción` = "Indicador de presencia de diabetes o prediabetes"
+  ),
+  list(
+    Variable = "HighBP",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "Sin hipertensión / Con hipertensión",
+    `Descripción` = "Diagnóstico de hipertensión arterial"
+  ),
+  list(
+    Variable = "HighChol",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "Sin colesterol alto / Con colesterol alto",
+    `Descripción` = "Diagnóstico de colesterol elevado"
+  ),
+  list(
+    Variable = "CholCheck",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "Sin chequeo en 5 años / Con chequeo en 5 años",
+    `Descripción` = "Realizó chequeo de colesterol en los últimos 5 años"
+  ),
+  list(
+    Variable = "Smoker",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "No fumador / Fumador",
+    `Descripción` = "Ha fumado al menos 100 cigarrillos en su vida"
+  ),
+  list(
+    Variable = "Stroke",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "Sin ACV / Con ACV",
+    `Descripción` = "Antecedente de accidente cerebrovascular"
+  ),
+  list(
+    Variable = "HeartDiseaseorAttack",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "Sin enfermedad cardíaca / Con enfermedad cardíaca",
+    `Descripción` = "Diagnóstico de enfermedad coronaria o infarto"
+  ),
+  list(
+    Variable = "PhysActivity",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "Sin actividad física / Con actividad física",
+    `Descripción` = "Actividad física en los últimos 30 días (excluye trabajo)"
+  ),
+  list(
+    Variable = "Fruits",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "No consume frutas diario / Consume frutas diario",
+    `Descripción` = "Consumo diario de frutas"
+  ),
+  list(
+    Variable = "Veggies",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "No consume verduras diario / Consume verduras diario",
+    `Descripción` = "Consumo diario de verduras"
+  ),
+  list(
+    Variable = "HvyAlcoholConsump",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "No consumo alto alcohol / Consumo alto alcohol",
+    `Descripción` = "Consumo elevado de alcohol según criterio BRFSS"
+  ),
+  list(
+    Variable = "AnyHealthcare",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "Sin cobertura médica / Con cobertura médica",
+    `Descripción` = "Cuenta con seguro o cobertura médica"
+  ),
+  list(
+    Variable = "NoDocbcCost",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "Sin barrera económica / Con barrera económica",
+    `Descripción` = "No pudo consultar médico por razones económicas"
+  ),
+  list(
+    Variable = "DiffWalk",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "Sin dificultad al caminar / Con dificultad al caminar",
+    `Descripción` = "Dificultad para caminar o subir escaleras"
+  ),
+  list(
+    Variable = "Sex",
+    Rol = "Feature",
+    Tipo = "Binaria (categórica)",
+    `Codificación` = "Mujer / Hombre",
+    `Descripción` = "Sexo biológico del encuestado"
+  ),
+  list(
+    Variable = "BMI",
+    Rol = "Feature",
+    Tipo = "Numérica continua",
+    `Codificación` = "Valor numérico",
+    `Descripción` = "Índice de Masa Corporal"
+  ),
+  list(
+    Variable = "MentHlth",
+    Rol = "Feature",
+    Tipo = "Numérica discreta",
+    `Codificación` = "0–30 días",
+    `Descripción` = "Número de días con mala salud mental en los últimos 30 días"
+  ),
+  list(
+    Variable = "PhysHlth",
+    Rol = "Feature",
+    Tipo = "Numérica discreta",
+    `Codificación` = "0–30 días",
+    `Descripción` = "Número de días con mala salud física en los últimos 30 días"
+  ),
+  list(
+    Variable = "GenHlth",
+    Rol = "Feature",
+    Tipo = "Ordinal (categórica ordenada)",
+    `Codificación` = "Excelente / Muy buena / Buena / Regular / Mala",
+    `Descripción` = "Autopercepción del estado general de salud"
+  ),
+  list(
+    Variable = "Age",
+    Rol = "Feature",
+    Tipo = "Ordinal (categórica ordenada)",
+    `Codificación` = "18–24 … 80+",
+    `Descripción` = "Categoría de edad (13 grupos ordenados)"
+  ),
+  list(
+    Variable = "Education",
+    Rol = "Feature",
+    Tipo = "Ordinal (categórica ordenada)",
+    `Codificación` = "Nunca asistió … Universidad completa",
+    `Descripción` = "Nivel educativo del encuestado"
+  ),
+  list(
+    Variable = "Income",
+    Rol = "Feature",
+    Tipo = "Ordinal (categórica ordenada)",
+    `Codificación` = "< $10,000 … $75,000+",
+    `Descripción` = "Categoría de ingresos anuales del hogar"
+  )
+)
+
+dic_df <- bind_rows(data_dictionary) %>% as_tibble()
+
+dic_df %>%
+  kable(align = "l") %>%
+  kable_styling(full_width = FALSE)
+```
+
+## **5. Limpieza y Verificación de Calidad de los Datos**
+
+Antes de proceder con el análisis descriptivo y las visualizaciones, es fundamental verificar la calidad del conjunto de datos. Esta etapa permite identificar posibles inconsistencias, valores faltantes, duplicaciones o errores en los rangos de las variables, garantizando que los resultados posteriores sean confiables y correctamente interpretados.
+
+### **5.1 Identificación de valores faltantes**
+
+```{r}
+colSums(is.na(df))
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+# Porcentaje de valores faltantes
+round(colMeans(is.na(df)) * 100, 4)
+```
+
+Se realizó una verificación de valores faltantes mediante el método `isnull()`. Los resultados muestran que ninguna variable presenta valores nulos, lo cual indica que el conjunto de datos se encuentra completo y no requiere imputación ni eliminación de registros por este motivo.
+
+### **5.2 Revisión de registros duplicados**
+
+```{r ,echo=FALSE, warning=FALSE, message=FALSE}
+duplicados <- sum(duplicated(df))
+duplicados
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+df[duplicated(df), ]
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+total_filas <- nrow(df_viz)
+propor_dupli <- (duplicados / total_filas) * 100
+propor_dupli
+```
+
+**NOTA:** La verificación de registros duplicados identificó 24.206 observaciones completamente idénticas, lo que representa aproximadamente el 9.5% del total de registros. Sin embargo, dado que el dataset contiene un identificador único por individuo (ID), el cual fue excluido al importar los datos, y que se trata de datos provenientes de una encuesta poblacional con variables mayoritariamente categóricas y discretas, es plausible que múltiples individuos compartan exactamente el mismo patrón de respuestas. Por lo tanto, estos registros no se consideran errores estructurales y no fueron eliminados del análisis, ya que representan individuos distintos con características similares.
+
+### **5.3 Verificación de rangos esperados**
+
+#### **5.3.1 Variables binarias**
+
+Estas deberían contener exclusivamente valores 0 y 1.
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+binary_cols_original <- binary_cols
+
+for (col in binary_cols_original) {
+  cat(col, sort(unique(df[[col]])), "\n")
+}
+```
+
+Se verificó que las variables binarias únicamente contuvieran valores dentro del rango esperado {0, 1}. No se encontraron valores fuera de esta codificación, lo que confirma la consistencia de las variables dicotómicas.
+
+#### **5.3.2 Variables ordinales**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+ordinal_ranges <- list(
+  GenHlth = c(1, 5),
+  Education = c(1, 6),
+  Income = c(1, 8),
+  Age = c(1, 13)
+)
+
+for (col in names(ordinal_ranges)) {
+  cat(
+    col,
+    "min:", min(df[[col]], na.rm = TRUE),
+    "max:", max(df[[col]], na.rm = TRUE),
+    "\n"
+  )
+}
+```
+
+Las variables ordinales fueron verificadas para asegurar que sus valores se encuentren dentro de los rangos definidos por el instrumento BRFSS. Los valores mínimos y máximos observados coinciden con los límites esperados, por lo que no se detectaron inconsistencias.
+
+#### **5.3.3 Variables numéricas**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+colMeans(df[, numeric_cols], na.rm = TRUE)
+
+numeric_check <- df[, numeric_cols] %>%
+  summarise(across(
+    everything(),
+    list(
+      min = ~min(.x, na.rm = TRUE),
+      max = ~max(.x, na.rm = TRUE)
+    )
+  ))
+
+mins <- sapply(df[, numeric_cols], min, na.rm = TRUE)
+maxs <- sapply(df[, numeric_cols], max, na.rm = TRUE)
+rangos <- maxs - mins
+
+numeric_check <- rbind(
+  "Mínimo" = round(mins, 2),
+  "Máximo" = round(maxs, 2),
+  "Rango"  = round(rangos, 2)
+)
+
+numeric_check
+```
+
+Se realizó una verificación de rangos esperados para las variables numéricas continuas y discretas. Se analizaron los valores mínimo y máximo, así como el rango observado. Los resultados confirman que las variables BMI, MentHlth y PhysHlth se encuentran dentro de los límites teóricamente esperados (BMI: 12–98; salud física y mental: 0–30 días), sin evidencia de valores fuera de dominio.
+
+En conjunto, el dataset presenta una alta calidad estructural: no se identificaron valores faltantes, duplicados ni inconsistencias en los rangos esperados de las variables. Esto permite proceder con el análisis exploratorio con un alto grado de confianza en la integridad de la información.
+
+### **5.4 Valores atípicos**
+
+```{r}
+resumen_outliers <- function(df_viz) {
+  
+  numericas <- df_viz %>%
+    select(where(is.numeric)) %>%
+    names()
+  
+  resultados <- map_df(numericas, function(col) {
+    
+    Q1  <- quantile(df_viz[[col]], 0.25, na.rm = TRUE)
+    Q3  <- quantile(df_viz[[col]], 0.75, na.rm = TRUE)
+    IQR_val <- Q3 - Q1
+    
+    limite_inf <- Q1 - 1.5 * IQR_val
+    limite_sup <- Q3 + 1.5 * IQR_val
+    
+    outliers <- df_viz %>%
+      filter(.data[[col]] < limite_inf | .data[[col]] > limite_sup)
+    
+    tibble(
+      Variable = col,
+      Q1 = round(Q1, 2),
+      Q3 = round(Q3, 2),
+      IQR = round(IQR_val, 2),
+      `Límite inferior` = round(limite_inf, 2),
+      `Límite superior` = round(limite_sup, 2),
+      `N° Outliers` = nrow(outliers),
+      `% Outliers` = round(nrow(outliers) / nrow(df_viz) * 100, 2)
+    )
+  })
+  
+  resultados %>%
+    arrange(desc(`% Outliers`))
+}
+tabla_outliers <- resumen_outliers(df_viz)
+
+kable(tabla_outliers)
+```
+
+Se realizó la detección de valores atípicos en las variables numéricas mediante el criterio del rango intercuartílico ``(IQR)``. Los resultados evidencian que las variables relacionadas con el número de días de mala salud física (PhysHlth) y mala salud mental (MentHlth) presentan la mayor proporción de valores atípicos (16.14% y 14.27%, respectivamente). Este comportamiento se explica por la naturaleza discreta y asimétrica de estas variables, que concentran una alta proporción de observaciones en valores bajos (especialmente en 0 días) y presentan una cola extendida hacia valores altos.
+
+En el caso del Índice de Masa Corporal (BMI), se identificó un 3.88% de valores atípicos, correspondientes principalmente a niveles elevados del índice, clínicamente asociados a obesidad severa.
+
+NOTA: El análisis de valores atípicos se realizó únicamente sobre variables numéricas continuas o de conteo (BMI, PhysHlth y MentHlth), dado que el criterio del rango intercuartílico no es apropiado para variables categóricas, binarias u ordinales. Variables como Diabetes_binary, GenHlth o Education representan categorías discretas sin continuidad numérica real, por lo que la detección de outliers en estos casos carece de interpretación estadística válida.
+
+
+## **6. Resumen estadístico**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+colMeans(df[, numeric_cols], na.rm = TRUE)
+
+var_num_cat <- rbind(
+  "Media" = round(sapply(df[, numeric_cols], mean, na.rm = TRUE), 2),
+  "Desviación estándar" = round(sapply(df[, numeric_cols], sd, na.rm = TRUE), 2),
+  "Mínimo" = round(sapply(df[, numeric_cols], min, na.rm = TRUE), 2),
+  "Máximo" = round(sapply(df[, numeric_cols], max, na.rm = TRUE), 2),
+  "Mediana" = round(sapply(df[, numeric_cols], median, na.rm = TRUE), 2),
+  "Percentil 25%" = round(sapply(df[, numeric_cols], quantile, probs = 0.25, na.rm = TRUE), 2),
+  "Percentil 75%" = round(sapply(df[, numeric_cols], quantile, probs = 0.75, na.rm = TRUE), 2)
+)
+
+var_num_cat
+```
+
+El Índice de Masa Corporal `BMI` presenta una media de 28.38 y una mediana de 27.00, lo que sugiere una ligera asimetría positiva. El rango observado (12.00 – 98.00) indica una amplitud considerable, con presencia de valores elevados que pueden influir en la media. El percentil 25 (24.00) y el percentil 75 (31.00) muestran que el 50% central de la población se encuentra dentro de un intervalo relativamente concentrado, lo que sugiere variabilidad moderada.
+
+En el caso de `MentHlth` (días de mala salud mental), la media es 3.18 días, mientras que la mediana es 0.00 días. Este contraste indica que más de la mitad de los individuos no reportaron días de mala salud mental en los últimos 30 días, pero existe un subconjunto que sí reporta valores altos, generando una distribución asimétrica hacia la derecha.
+
+De manera similar, `PhysHlth` presenta una media de 4.24 días y una mediana de 0.00 días. La diferencia entre media y mediana evidencia también una fuerte asimetría positiva, con concentración de valores en cero y presencia de casos con múltiples días reportados.
+
+En conjunto, las variables de salud física y mental muestran distribuciones altamente concentradas en cero, con colas hacia valores superiores, mientras que el BMI presenta mayor dispersión y variabilidad continua.
+
+### **6.1 Asimetría y curtosis**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+skew_kurt <- rbind(
+  "Asimetría" = round(sapply(df[, numeric_cols], skewness, na.rm = TRUE), 2),
+  "Curtosis"  = round(sapply(df[, numeric_cols], kurtosis, na.rm = TRUE), 2)
+)
+
+skew_kurt
+```
+
+Todas las variables presentan asimetría positiva considerable (valores mayores a 2), lo que indica que sus distribuciones se encuentran sesgadas hacia la derecha. Esto significa que existe una concentración elevada de observaciones en valores bajos, acompañada de una cola extendida hacia valores superiores. Este patrón es particularmente evidente en MentHlth (2.72), lo que confirma la fuerte acumulación de individuos que reportan cero días de mala salud mental, junto con un subconjunto más reducido que reporta valores altos.
+
+En el caso de BMI (2.12), la asimetría positiva sugiere la presencia de valores elevados que desplazan la media por encima de la mediana, lo cual es coherente con la amplitud observada en el rango y con la posible existencia de individuos con obesidad severa.
+
+Respecto a la curtosis, los valores obtenidos indican que las tres variables presentan distribuciones leptocúrticas (curtosis > 0 bajo definición de Fisher utilizada por pandas), especialmente BMI (11.00). Esto implica que las distribuciones tienen colas pesadas y mayor concentración de valores extremos en comparación con una distribución normal. MentHlth (6.44) y PhysHlth (3.50) también muestran colas pronunciadas, aunque en menor medida.
+
+En conjunto, estos resultados confirman que ninguna de las variables numéricas sigue una distribución aproximadamente normal. Las distribuciones se caracterizan por alta concentración en valores bajos y presencia de observaciones extremas, lo que justifica el uso de visualizaciones robustas (como histogramas y diagramas de caja) y medidas basadas en percentiles para el análisis posterior.
+
+## **7. Análisis univariado**
+
+El análisis univariado tiene como objetivo examinar cada variable de manera individual para comprender su distribución, comportamiento y características principales. En esta sección se describen medidas de tendencia central, dispersión y forma en variables numéricas, así como frecuencias y proporciones en variables categóricas. Este análisis permite identificar posibles valores atípicos, asimetrías, patrones dominantes y calidad de los datos, constituyendo la base para interpretaciones posteriores y para la construcción del análisis bivariado y multivariado.
+
+### **7.1. Variables demográficas**m
+
+#### **7.1.1. Sexo**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_sex <- df_viz %>%
+  count(Sex, name = "Frecuencia") %>%
+  mutate(`Porcentaje (%)` = round(Frecuencia / sum(Frecuencia) * 100, 2))
+
+tabla_sex
+
+df %>%
+  count(Sex) %>%
+  ggplot(aes(x = "", y = n, fill = factor(Sex))) +
+  geom_col(width = 1) +
+  coord_polar("y") +
+  scale_fill_manual(
+    values = c("#E2A8A4", "#56D8CB"),
+    labels = c("Mujer", "Hombre"),
+    name = ""
+  ) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", 100 * n / sum(n))),
+    position = position_stack(vjust = 0.5)
+  ) +
+  labs(title = "Distribución del sexo en la población") +
+  theme_void()
+```
+
+La tabla de frecuencias muestra la distribución de la variable Sex en la población analizada. Se observa que el 55.97% (n = 14,197) de los registros corresponde a mujeres, mientras que el 44.03% (n = 11,706) pertenece a hombres.
+
+Estos resultados indican que la muestra presenta una ligera mayor representación de mujeres frente a los hombres. En términos generales, la distribución no es extremadamente desbalanceada, aunque sí existe una diferencia aproximada de 12 puntos porcentuales entre ambas categorías.
+
+#### **7.1.2. Edad**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+intervalos <- c(
+  "18–24","25–29","30–34","35–39","40–44","45–49",
+  "50–54","55–59","60–64","65–69","70–74","75–79","80+"
+)
+
+tabla_age <- df %>%
+  count(Age, name = "N") %>%
+  arrange(Age) %>%
+  mutate(
+    `Código` = Age,
+    `Intervalo de Edad` = intervalos[Age],
+    `%` = round(N / sum(N) * 100, 2)
+  ) %>%
+  select(`Código`, `Intervalo de Edad`, N, `%`)
+
+tabla_age
+
+df_plot <- df %>%
+  count(Age) %>%
+  mutate(
+    porcentaje = 100 * n / sum(n),
+    Age = factor(Age, levels = sort(unique(Age)))
+  )
+
+ggplot(df_plot, aes(x = Age, y = n)) +
+  geom_col(fill = "#56D8CB") +
+  geom_text(
+    aes(label = sprintf("%.1f%%", porcentaje)),
+    vjust = -0.3,
+    size = 3.5
+  ) +
+  labs(
+    title = "Distribución por Grupos de Edad",
+    x = "Grupo de Edad",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+
+La distribución etaria evidencia una concentración progresiva de la muestra en los grupos de edad media y tardía. Se observa que los intervalos comprendidos entre 50 y 69 años (códigos 7 a 10) acumulan aproximadamente el 48.31% del total de observaciones, con un pico específico en el grupo 60–64 años (13.10%), seguido por el grupo 65–69 años (12.69%) y 55–59 años (12.15%).
+
+Este patrón indica una clara sobrerrepresentación de población en etapas de madurez y transición hacia la vejez, mientras que los grupos jóvenes (18–34 años) presentan una participación relativa considerablemente menor (aprox. 9.63% acumulado).
+
+### **7.2. Variables socioeconómicas y acceso a la salud**
+
+#### **7.2.1. Educación**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+# Crear tabla de frecuencias
+tabla_edu <- df_viz %>%
+  count(Education) %>%
+  arrange(Education) %>%
+  mutate(
+    porcentaje = n / sum(n)
+  )
+tabla_edu
+
+# Gráfico
+ggplot(tabla_edu, aes(x = n, y = factor(Education, levels = sort(unique(Education))))) +
+  geom_col(fill = "#56D8CB") +
+  geom_text(
+    aes(label = percent(porcentaje, accuracy = 0.1)),
+    hjust = -0.1,
+    size = 4
+  ) +
+  labs(
+    title = "Nivel Educativo",
+    x = "Frecuencia",
+    y = "Nivel Educativo"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14)
+  ) +
+  expand_limits(x = max(tabla_edu$n) * 1.1)
+```
+
+
+La distribución del nivel educativo evidencia una marcada concentración de la población en niveles de escolaridad media y superior. El grupo con mayor representación corresponde a los graduados universitarios, que constituyen el 42.31% (n = 107,325) de la muestra, seguido por quienes reportan algo de educación universitaria o formación técnica, con un 27.56% (n = 69,910). En conjunto, estas dos categorías agrupan cerca del 70% de los individuos, lo que indica un perfil educativo predominantemente alto dentro del dataset.
+
+El nivel de graduado de secundaria representa el 24.74%, consolidando la mayor parte de la población en niveles educativos al menos completos en educación media. En contraste, los niveles educativos bajos presentan una participación marginal: los individuos con escolaridad inferior a secundaria (categorías 1 a 3) suman menos del 6% del total, evidenciando una subrepresentación relativa de poblaciones con baja escolaridad.
+
+#### **7.2.2. Ingresos**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+income_cat <- c(
+  "Menos de $10,000",
+  "$10,000–$14,999",
+  "$15,000–$19,999",
+  "$20,000–$24,999",
+  "$25,000–$34,999",
+  "$35,000–$49,999",
+  "$50,000–$74,999",
+  "$75,000 o más"
+)
+
+tabla_income <- df_viz %>%
+  count(Income, name = "N") %>%
+  arrange(Income) %>%
+  mutate(
+    `Código` = Income,
+    Categoría = income_cat[Income],
+    `%` = round(N / sum(N) * 100, 2)
+  ) %>%
+  select(`Código`, Categoría, N, `%`)
+
+tabla_income
+
+ggplot(tabla_income, aes(y = factor(`Código`), x = N)) +
+  geom_col(fill = "#56D8CB") +
+  geom_text(
+    aes(label = sprintf("%.1f%%", `%`)),
+    hjust = -0.1,
+    size = 2.5
+  ) +
+  labs(
+    title = "Distribución del Nivel de Ingresos",
+    x = "Frecuencia",
+    y = "Nivel de Ingresos"
+  ) +
+  theme_minimal()
+```
+
+
+La distribución del nivel de ingresos evidencia una clara concentración de la población en los estratos económicos medios y altos. El grupo más representativo corresponde a individuos con ingresos anuales de $75,000 o más, que constituyen el 35.63% (n = 90,385) del total de la muestra, seguido por el rango de $50,000–$74,999, con un 17.04%. En conjunto, estos dos niveles agrupan más de la mitad de las observaciones, indicando una predominancia de hogares con ingresos relativamente elevados dentro del dataset.
+
+Los niveles intermedios de ingreso ($25,000–$49,999) presentan participaciones moderadas, mientras que los estratos de ingresos bajos (menos de $20,000 anuales) representan una proporción considerablemente menor, acumulando menos del 13% de la muestra. Este patrón sugiere una distribución socioeconómica desplazada hacia niveles superiores de ingreso, evidenciando una posible subrepresentación relativa de poblaciones económicamente vulnerables.
+
+#### **7.2.3. Acceso a servicios de salud**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_acceso <- df_viz %>%
+  count(AnyHealthcare, name = "Frecuencia") %>%
+  mutate(`Porcentaje (%)` = round(Frecuencia / sum(Frecuencia) * 100, 2))
+
+tabla_acceso
+
+df %>%
+  count(AnyHealthcare) %>%
+  ggplot(aes(x = "", y = n, fill = factor(AnyHealthcare))) +
+  geom_col(width = 1) +
+  coord_polar("y") +
+  scale_fill_manual(
+    values = c("#E2A8A4", "#56D8CB"),
+    labels = c("Sin cobertura médica", "Con cobertura médica"),
+    name = ""
+  ) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", 100 * n / sum(n))),
+    position = position_stack(vjust = 0.5)
+  ) +
+  labs(title = "Acceso a servicios de salud") +
+  theme_void()
+```
+
+
+La distribución del acceso a servicios de salud muestra una marcada predominancia de individuos que reportan contar con cobertura o acceso sanitario. En particular, el 95.11% (n = 241,263) de la población indica tener acceso a servicios de salud, mientras que únicamente el 4.89% (n = 12,417) manifiesta no disponer de dicho acceso.
+
+Esta fuerte concentración en la categoría afirmativa evidencia una población ampliamente integrada al sistema de atención sanitaria, lo cual es consistente con el diseño de encuestas poblacionales enfocadas en monitoreo de condiciones de salud en adultos. Sin embargo, la baja proporción relativa del grupo sin acceso introduce un desbalance estructural que debe considerarse en análisis posteriores, especialmente en comparaciones entre grupos o en modelos predictivos, donde la menor representación puede afectar la estabilidad de estimaciones para esta categoría.
+
+#### **7.2.4. Barrera económica**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_barrera <- df_viz %>%
+  count(NoDocbcCost, name = "Frecuencia") %>%
+  mutate(`Porcentaje (%)` = round(Frecuencia / sum(Frecuencia) * 100, 2))
+
+tabla_barrera
+
+df_plot <- df %>%
+  count(NoDocbcCost) %>%
+  mutate(
+    porcentaje = 100 * n / sum(n),
+    NoDocbcCost = factor(NoDocbcCost, labels = c("Sin barrera económica", "Con barrera económica"))
+  )
+
+ggplot(df_plot, aes(x = NoDocbcCost, y = n)) +
+  geom_col(fill = c("#E2A8A4", "#56D8CB")) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", porcentaje)),
+    vjust = -0.3
+  ) +
+  labs(
+    title = "Limitación de atención médica por costos",
+    x = "Barrera económica para atención médica",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+La variable refleja la proporción de individuos que reportaron no haber acudido al médico en el último año debido a limitaciones económicas. Los resultados indican que el 91.58% (n = 232,326) de la muestra no experimentó barreras económicas para acceder a consulta médica, mientras que el 8.42% (n = 21,354) sí reportó haber pospuesto o evitado atención médica por motivos de costo.
+
+Aunque la mayoría de la población no presenta esta limitación, el porcentaje cercano al 8% no es despreciable desde una perspectiva de salud pública, ya que representa un segmento vulnerable cuya condición económica puede incidir en diagnósticos tardíos, menor seguimiento clínico y potencial agravamiento de enfermedades crónicas.
+
+### **7.3. Variables de conducta y estilo de vida**
+
+#### **7.3.1. Fumador**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_fum <- df_viz %>%
+  count(Smoker, name = "Frecuencia") %>%
+  mutate(`Porcentaje (%)` = round(Frecuencia/sum(Frecuencia)*100,2))
+
+tabla_fum
+
+
+df %>%
+  count(Smoker) %>%
+  ggplot(aes(x = "", y = n, fill = factor(Smoker))) +
+  geom_col(width = 1) +
+  coord_polar("y") +
+  scale_fill_manual(
+    values = c("#E2A8A4", "#56D8CB"),
+    labels = c("No fumador", "Fumador"),
+    name = ""
+  ) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", 100 * n / sum(n))),
+    position = position_stack(vjust = 0.5)
+  ) +
+  labs(title = "Condición de Fumador") +
+  theme_void()
+```
+
+La distribución de la variable Smoker muestra que el 55.68% (n = 141,257) de la población reporta no ser fumador, mientras que el 44.32% (n = 112,423) corresponde a individuos que sí presentan antecedente de consumo de tabaco.
+
+A diferencia de otras variables previamente analizadas, la proporción entre categorías no presenta un desbalance extremo, lo que indica una representación relativamente significativa del grupo fumador dentro del dataset. Este patrón sugiere que el consumo de tabaco constituye un comportamiento de riesgo ampliamente presente en la población estudiada, con una magnitud suficiente para permitir comparaciones robustas entre grupos.
+
+#### **7.3.2. Actividad física**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_actifi <- df_viz %>%
+  count(PhysActivity, name = "Frecuencia") %>%
+  mutate(`Porcentaje (%)` = round(Frecuencia / sum(Frecuencia) * 100, 2))
+
+tabla_actifi
+
+df %>%
+  count(PhysActivity) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    PhysActivity = factor(PhysActivity, labels = c("Sin actividad física", "Con actividad física"))
+  ) %>%
+  ggplot(aes(x = PhysActivity, y = n)) +
+  geom_col(fill = c("#E2A8A4", "#56D8CB")) +
+  geom_text(aes(label = sprintf("%.1f%%", pct)), vjust = -0.3) +
+  labs(
+    title = "Realización de actividad física",
+    x = "Realiza actividad física",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+La distribución de la variable PhysActivity indica que el 75.65% (n = 191,920) de la población reporta haber realizado actividad física en los últimos 30 días, mientras que el 24.35% (n = 61,760) señala no haber realizado ningún tipo de actividad física durante ese periodo.
+
+Esta estructura evidencia una clara predominancia de individuos con algún nivel de actividad física reciente, lo cual sugiere una muestra mayoritariamente activa desde el punto de vista conductual. Sin embargo, la proporción cercana a una cuarta parte de la población que reporta inactividad no es marginal desde una perspectiva epidemiológica, dado que el sedentarismo constituye un factor de riesgo relevante para enfermedades cardiovasculares, metabólicas y otras condiciones crónicas.
+
+#### **7.3.3. Consumo de frutas**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_fruta <- df_viz %>%
+  count(Fruits, name = "Frecuencia") %>%
+  mutate(`Porcentaje (%)` = round(Frecuencia / sum(Frecuencia) * 100, 2))
+
+tabla_fruta
+
+df %>%
+  count(Fruits) %>%
+  ggplot(aes(x = "", y = n, fill = factor(Fruits))) +
+  geom_col(width = 1) +
+  coord_polar("y") +
+  scale_fill_manual(
+    values = c("#E2A8A4", "#56D8CB"),
+    labels = c("No consume frutas diario", "Consume frutas diario"),
+    name = ""
+  ) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", 100 * n / sum(n))),
+    position = position_stack(vjust = 0.5)
+  ) +
+  labs(title = "Consumo Frecuente de Frutas") +
+  theme_void()
+```
+
+La distribución de la variable Fruits muestra que el 63.43% (n = 160,898) de los individuos reporta consumir frutas de manera regular, mientras que el 36.57% (n = 92,782) indica no mantener este hábito alimenticio.
+
+Estos resultados evidencian una predominancia del consumo de frutas dentro de la población analizada; sin embargo, la proporción de individuos que no reporta consumo regular continúa siendo considerable, representando más de un tercio de la muestra. Desde una perspectiva de salud pública, esta distribución sugiere la coexistencia de comportamientos alimentarios saludables junto con un segmento relevante de la población potencialmente expuesto a factores dietarios de riesgo.
+
+#### **7.3.4. Consumo de vegetales**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_vege <- df_viz %>%
+  count(Veggies, name = "Frecuencia") %>%
+  mutate(`Porcentaje (%)` = round(Frecuencia / sum(Frecuencia) * 100, 2))
+
+tabla_vege
+
+# ---- Gráfico de barras con porcentajes ----
+df %>%
+  count(Veggies) %>%
+  mutate(Veggies = factor(Veggies, labels = c("No consume vegetales diario", "Consume vegetales diario"))) %>%
+  ggplot(aes(x = Veggies, y = n)) +
+  geom_col(fill = c("#E2A8A4", "#56D8CB")) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", 100 * n / sum(n))),
+    vjust = -0.3
+  ) +
+  labs(
+    title = "Consumo frecuente de vegetales",
+    x = "Consume vegetales diariamente",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+La distribución de la variable indica que el 81.14% (n = 205,841) de los individuos reporta consumir vegetales de manera regular, mientras que el 18.86% (n = 47,839) señala no incluir este tipo de alimentos en su consumo habitual.
+
+Estos resultados evidencian una alta prevalencia de consumo de vegetales dentro de la población analizada, lo que sugiere la presencia generalizada de comportamientos alimentarios asociados a patrones nutricionales saludables. No obstante, la proporción cercana al 19% de individuos sin consumo regular continúa siendo relevante desde una perspectiva epidemiológica, dado que dietas bajas en vegetales se asocian con mayor riesgo de enfermedades crónicas no transmisibles.
+
+#### **7.3.5. Consumo elevado de alcohol**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_alco <- df_viz %>%
+  count(HvyAlcoholConsump, name = "Frecuencia") %>%
+  mutate(`Porcentaje (%)` = round(Frecuencia / sum(Frecuencia) * 100, 2))
+
+tabla_alco
+
+df %>%
+  count(HvyAlcoholConsump) %>%
+  ggplot(aes(x = "", y = n, fill = factor(HvyAlcoholConsump))) +
+  geom_col(width = 1) +
+  coord_polar("y") +
+  scale_fill_manual(
+    values = c("#E2A8A4", "#56D8CB"),
+    labels = c("Sin consumo elevado de alcohol", "Consumo elevado de alcohol"),
+    name = ""
+  ) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", 100 * n / sum(n))),
+    position = position_stack(vjust = 0.5)
+  ) +
+  labs(title = "Consumo Elevado de Alcohol") +
+  theme_void()
+```
+
+
+La distribución muestra que el 94.38% (n = 239,424) de los individuos no reporta consumo excesivo de alcohol, mientras que el 5.62% (n = 14,256) sí presenta patrones de consumo considerados elevados o de riesgo.
+
+Esta marcada diferencia entre categorías indica que el consumo excesivo de alcohol constituye un comportamiento relativamente poco frecuente dentro de la población analizada. Sin embargo, aunque minoritario, el grupo que presenta este patrón mantiene una relevancia epidemiológica importante, dado que el consumo elevado de alcohol se asocia con múltiples efectos adversos sobre la salud, incluyendo enfermedades cardiovasculares, hepáticas y trastornos metabólicos.
+
+#### **7.3.6. Chequeo de colesterol**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_coles <- df_viz %>%
+  count(CholCheck, name = "Frecuencia") %>%
+  mutate(`Porcentaje (%)` = round(Frecuencia / sum(Frecuencia) * 100, 2))
+
+tabla_coles
+
+# ---- Gráfico de barras con porcentajes ----
+df %>%
+  count(CholCheck) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    CholCheck = factor(CholCheck, labels = c("Sin chequeo en 5 años", "Con chequeo en 5 años"))
+  ) %>%
+  ggplot(aes(x = CholCheck, y = n)) +
+  geom_col(fill = c("#E2A8A4", "#56D8CB")) +
+  geom_text(aes(label = sprintf("%.1f%%", pct)), vjust = -0.3) +
+  labs(
+    title = "Chequeo de colesterol",
+    x = "Se realizó chequeo de colesterol",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+La distribución de la variable CholCheck indica que el 96.27% (n = 244,210) de los individuos reporta haberse realizado un control de colesterol en los últimos cinco años, mientras que únicamente el 3.73% (n = 9,470) señala no haber efectuado dicha evaluación en ese periodo.
+
+Este patrón refleja una alta cobertura en prácticas preventivas relacionadas con monitoreo cardiovascular dentro de la población estudiada. La proporción mayoritaria sugiere una población ampliamente integrada a esquemas de seguimiento médico, particularmente en lo que respecta a factores de riesgo metabólico.
+
+### **7.4. Variables de factores clínicos y metabólicos**
+
+#### **7.4.1. Indice de Masa Corporal (BMI)**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+bmi_summary_df <- df %>%
+  summarise(
+    count  = sum(!is.na(BMI)),
+    mean   = round(mean(BMI, na.rm = TRUE), 2),
+    std    = round(sd(BMI, na.rm = TRUE), 2),
+    min    = round(min(BMI, na.rm = TRUE), 2),
+    `25%`  = round(quantile(BMI, 0.25, na.rm = TRUE), 2),
+    `50%`  = round(median(BMI, na.rm = TRUE), 2),
+    `75%`  = round(quantile(BMI, 0.75, na.rm = TRUE), 2),
+    max    = round(max(BMI, na.rm = TRUE), 2)
+  ) %>%
+  t() %>%
+  as.data.frame()
+
+colnames(bmi_summary_df) <- "BMI"
+
+bmi_summary_df
+```
+
+El resumen estadístico del Índice de Masa Corporal (BMI) muestra un total de 253,680 observaciones, con un valor promedio de 28.38 y una mediana de 27.00, lo que indica que la mitad de los individuos presenta valores de BMI iguales o inferiores a este punto central.
+
+Los valores se distribuyen entre un mínimo de 12.00 y un máximo de 98.00, evidenciando un amplio rango dentro de la variable. El primer cuartil (Q1 = 24.00) y el tercer cuartil (Q3 = 31.00) indican que el 50% central de las observaciones se concentra dentro de este intervalo.
+
+La desviación estándar de 6.61 refleja la variabilidad presente en los valores de BMI dentro del conjunto de datos analizado.
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+ggplot(df, aes(x = BMI)) +
+  geom_histogram(aes(y = ..density..),
+                 bins = 30,
+                 fill = "#56D8CB",
+                 alpha = 0.6) +
+  geom_density(color = "pink", size = 1) +
+  labs(title = "Distribución del Índice de Masa Corporal (BMI)",
+       x = "BMI",
+       y = "Densidad")
+```
+
+La distribución del Índice de Masa Corporal (BMI) muestra una mayor
+concentración de observaciones en valores intermedios, con una frecuencia más
+alta alrededor del rango comprendido aproximadamente entre **24 y 31**, en
+coherencia con los cuartiles observados previamente en el resumen estadístico.
+
+Asimismo, la forma de la distribución presenta una extensión visible hacia
+valores más altos de BMI, sugiriendo una **asimetría hacia la derecha**. Esta
+característica podría indicar la presencia de valores extremos en la parte
+superior de la distribución.
+
+#### **7.4.2. Presión arterial alta**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_PAA <- df_viz %>%
+  count(HighBP, name = "Frecuencia") %>%
+  mutate(`Porcentaje (%)` = round(Frecuencia / sum(Frecuencia) * 100, 2))
+
+tabla_PAA
+
+df %>%
+  count(HighBP) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    HighBP = factor(HighBP, labels = c("Sin hipertensión", "Con hipertensión"))
+  ) %>%
+  ggplot(aes(x = HighBP, y = n)) +
+  geom_col(fill = c("#E2A8A4", "#56D8CB")) +
+  geom_text(aes(label = sprintf("%.1f%%", pct)), vjust = -0.3) +
+  labs(
+    title = "Presencia de presión arterial alta",
+    x = "Tiene presión arterial alta",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+La distribución muestra que el 57.10% (n = 144,851) de los individuos no reporta diagnóstico de hipertensión arterial, mientras que el 42.90% (n = 108,829) sí presenta antecedentes de presión arterial alta.
+
+A diferencia de otras variables relacionadas con conductas o acceso a servicios de salud, la proporción de individuos con hipertensión resulta considerablemente elevada, evidenciando una presencia sustancial de esta condición dentro de la población analizada. La cercanía relativa entre ambas categorías sugiere una distribución más equilibrada, lo que indica que la hipertensión constituye un fenómeno ampliamente representado en el dataset y no un evento marginal.
+
+#### **7.4.3. Colesterol alto**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_CA <- df_viz %>%
+  count(HighChol, name = "Frecuencia") %>%
+  mutate(`Porcentaje (%)` = round(Frecuencia / sum(Frecuencia) * 100, 2))
+
+tabla_CA
+
+df %>%
+  count(HighChol) %>%
+  mutate(
+    pct = n / sum(n),
+    label = paste0(round(pct*100,1), "%"),
+    categoria = factor(HighChol, labels = c("Sin colesterol alto","Con colesterol alto"))
+  ) %>%
+  ggplot(aes(x = "", y = n, fill = categoria)) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label),
+            position = position_stack(vjust = 0.5)) +
+  scale_fill_manual(values = c("#E2A8A4","#56D8CB")) +
+  labs(title = "Presencia de Colesterol Alto", fill = NULL) +
+  theme_void()
+```
+
+La distribución de la variable HighChol indica que el 57.59% (n = 146,089) de los individuos no reporta niveles elevados de colesterol, mientras que el 42.41% (n = 107,591) sí presenta diagnóstico de hipercolesterolemia.
+
+Al igual que en el caso de la hipertensión arterial, la proporción de individuos con colesterol alto es considerablemente elevada, representando más de dos quintas partes de la población analizada. Esta magnitud evidencia que las alteraciones metabólicas constituyen un componente sustancial dentro del perfil de salud del dataset y no un evento aislado o marginal.
+
+### **7.5. Variables de estado funcional y percepción de la salud**
+
+#### **7.5.1. Percepción del estado de salud**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+genhlth_cat <- c(
+  "1" = "Excelente",
+  "2" = "Muy buena",
+  "3" = "Buena",
+  "4" = "Regular",
+  "5" = "Mala"
+)
+
+# ---- Tabla resumen ----
+tabla_genhlth <- df_viz %>%
+  count(GenHlth, name = "N") %>%
+  arrange(GenHlth) %>%
+  mutate(
+    Cod = genhlth_cat[as.character(GenHlth)],
+    `%` = round(N / sum(N) * 100, 2)
+  ) %>%
+  select(Categoría = GenHlth, N, `%`)
+
+tabla_genhlth
+
+# ---- Gráfico de barras ----
+df_viz %>%
+  mutate(GenHlth = factor(GenHlth, levels = sort(unique(GenHlth)))) %>%
+  count(GenHlth) %>%
+  mutate(
+    porcentaje = 100 * n / sum(n),
+    etiqueta = paste0(round(porcentaje,1), "%")
+  ) %>%
+  ggplot(aes(x = GenHlth, y = n)) +
+  geom_col(fill = "#56D8CB") +
+  geom_text(aes(label = etiqueta), vjust = -0.3) +
+  labs(
+    title = "Percepción General del Estado de Salud",
+    x = "Estado de Salud",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+La percepción general del estado de salud, presenta una distribución predominantemente concentrada en valoraciones positivas o intermedias. La categoría más frecuente corresponde a “Buena”, con el 29.82% (n = 75,646) de las observaciones, seguida por “Muy buena” (35.12%) y “Excelente” (17.86%). En conjunto, estas tres categorías agrupan más del 80% de la población, indicando una percepción global favorable del estado de salud entre los individuos analizados.
+
+Por otro lado, las categorías asociadas a percepciones menos favorables, “Regular” (12.44%) y “Mala” (4.76%), representan una proporción considerablemente menor, aunque epidemiológicamente relevante, ya que suelen asociarse con mayor carga de enfermedad crónica, limitaciones funcionales y mayor utilización de servicios sanitarios.
+
+#### **7.5.2. Días con mala salud física**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+df %>%
+  count(PhysHlth) %>%
+  arrange(PhysHlth) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    label = paste0(round(pct,1), "%")
+  ) %>%
+  ggplot(aes(y = factor(PhysHlth), x = n)) +
+  geom_col(fill = "#56D8CB") +
+  geom_text(aes(label = label), hjust = -0.1, size = 3) +
+  labs(
+    title = "Distribución de Días con Mala Salud Física",
+    x = "Frecuencia",
+    y = "Número de días"
+  ) +
+  theme_minimal() +
+  coord_cartesian(xlim = c(0, max(table(df$PhysHlth)) * 1.15))
+```
+La distribución de los días con mala salud física presenta una marcada asimetría positiva, con una fuerte concentración en el valor cero (63.1%), lo que indica que la mayoría de la población no reportó ningún día de malestar físico en el último mes. A partir de ahí, las frecuencias disminuyen rápidamente en los valores bajos (1–5 días) y se observa una cola derecha prolongada hasta 30 días, aunque con proporciones pequeñas, lo que evidencia alta dispersión y presencia de casos persistentes o crónicos.
+
+
+#### **7.5.3. Días con mala salud Mental**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+df %>%
+  count(MentHlth) %>%
+  arrange(MentHlth) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    label = paste0(round(pct,1), "%")
+  ) %>%
+  ggplot(aes(y = factor(MentHlth), x = n)) +
+  geom_col(fill = "#56D8CB") +
+  geom_text(aes(label = label), hjust = -0.1, size = 3) +
+  labs(
+    title = "Distribución de Días con Mala Salud Mental",
+    x = "Frecuencia",
+    y = "Número de días"
+  ) +
+  theme_minimal() +
+  coord_cartesian(xlim = c(0, max(table(df$MentHlth)) * 1.15))
+```
+
+La distribución de los días con mala salud mental también muestra una marcada asimetría positiva, con una concentración muy alta en el valor cero (69.3%), lo que indica que la mayoría de los encuestados no reportó episodios de malestar mental en el último mes. A medida que aumentan los días reportados, la frecuencia disminuye de forma pronunciada, aunque se mantiene una cola derecha que alcanza los 30 días, reflejando la presencia de un subgrupo con afectación persistente.
+
+#### **7.5.4. Dificultad para caminar**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_difc <- df_viz %>%
+  count(DiffWalk) %>%                      
+  mutate(
+    `Porcentaje (%)` = round(n / sum(n) * 100, 2)
+  ) %>%
+  rename(Frecuencia = n)
+
+tabla_difc
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+df %>%
+  count(DiffWalk) %>%
+  mutate(
+    pct = n / sum(n),
+    label = paste0(round(pct*100,1), "%"),
+    categoria = factor(DiffWalk, labels = c("Sin dificultad para caminar","Con dificultad para caminar"))
+  ) %>%
+  ggplot(aes(x = "", y = n, fill = categoria)) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label),
+            position = position_stack(vjust = 0.5)) +
+  scale_fill_manual(values = c("#E2A8A4","#56D8CB")) +
+  labs(title = "Dificultad para Caminar o Subir Escaleras", fill = NULL) +
+  theme_void()
+```
+
+La distribución de la variable, que evalúa la presencia de dificultades para caminar o subir escaleras, indica que el 83.18% (n = 211,005) de los individuos no reporta limitaciones funcionales de movilidad, mientras que el 16.82% (n = 42,675) sí manifiesta algún grado de dificultad en estas actividades.
+
+Aunque la mayoría de la población no presenta restricciones de movilidad, la proporción cercana al 17% resulta significativa desde una perspectiva de salud pública, ya que las limitaciones funcionales suelen asociarse con envejecimiento, presencia de enfermedades crónicas y determioro del estado general de salud. Este grupo puede representar individuos con mayor vulnerabilidad física y mayor probabilidad de requerir atención médica continua.
+
+### **7.6. Eventos cardiovasculares mayores**
+
+#### **7.6.1. Antecedente de Accidente Cerebrovascular**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_stroke <- df_viz %>%
+  count(Stroke) %>%                         
+  mutate(
+    `Porcentaje (%)` = round(n / sum(n) * 100, 2)
+  ) %>%
+  rename(Frecuencia = n)
+
+tabla_stroke
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+df %>%
+  mutate(
+    Stroke = as.character(Stroke),
+    Stroke = trimws(Stroke),
+    categoria = case_when(
+      Stroke %in% c("0", "No", "NO", "no") ~ "Sin ACV",
+      Stroke %in% c("1", "Yes", "YES", "yes", "Si", "SI", "sí", "Sí") ~ "Con ACV",
+      TRUE ~ NA_character_
+    ),
+    categoria = factor(categoria, levels = c("Sin ACV", "Con ACV"))
+  ) %>%
+  filter(!is.na(categoria)) %>%
+  count(categoria) %>%
+  mutate(
+    pct = n / sum(n),
+    label = paste0(round(pct * 100, 1), "%")
+  ) %>%
+  ggplot(aes(x = "", y = n, fill = categoria)) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label),
+            position = position_stack(vjust = 0.5)) +
+  scale_fill_manual(values = c("#E2A8A4", "#56D8CB")) +
+  labs(title = "Antecedente de Accidente Cerebrovascular", fill = NULL) +
+  theme_void()
+```
+
+La distribución de la variable Stroke indica que el 95.94% (n = 243,388) de los individuos no reporta antecedente de accidente cerebrovascular, mientras que el 4.06% (n = 10,292) sí presenta historial de esta condición.
+
+Aunque la proporción de casos es relativamente baja en términos absolutos, su relevancia clínica es significativa, dado que el accidente cerebrovascular constituye un evento de alta gravedad, asociado a morbilidad sustancial, discapacidad funcional y aumento del riesgo de mortalidad. La baja prevalencia observada es consistente con la naturaleza de esta condición en población general, donde, a pesar de su impacto severo, su frecuencia es menor en comparación con otros factores de riesgo cardiovascular como hipertensión o colesterol elevado.
+
+#### **7.6.2. Enfermedad/ateque cardíaco**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_ataq <- df_viz %>%
+  count(HeartDiseaseorAttack) %>%          
+  mutate(
+    `Porcentaje (%)` = round(n / sum(n) * 100, 2)
+  ) %>%
+  rename(Frecuencia = n)
+
+tabla_ataq
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+df %>%
+  count(HeartDiseaseorAttack) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    HeartDiseaseorAttack = factor(HeartDiseaseorAttack, labels = c("Sin enfermedad/ataque cardíaco", "Con enfermedad/ataque cardíaco"))
+  ) %>%
+  ggplot(aes(x = HeartDiseaseorAttack, y = n)) +
+  geom_col(fill = c("#E2A8A4", "#56D8CB")) +
+  geom_text(aes(label = sprintf("%.1f%%", pct)), vjust = -0.3) +
+  labs(
+    title = "Antecedente de enfermedad cardíaca o ataque cardíaco",
+    x = "Presenta antecedente cardíaco",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+La distribución muestra que el 90.58% (n = 229,787) de los individuos no reporta antecedente de enfermedad cardíaca o infarto de miocardio, mientras que el 9.42% (n = 23,893) sí presenta historial de este tipo de evento cardiovascular.
+
+Aunque la mayoría de la población no reporta diagnóstico previo, la proporción cercana al 9.5% resulta epidemiológicamente significativa, ya que las enfermedades cardiovasculares constituyen una de las principales causas de morbilidad y mortalidad a nivel poblacional. En comparación con la variable Stroke, la prevalencia observada es más elevada, lo cual es consistente con la mayor frecuencia relativa de eventos coronarios frente a accidentes cerebrovasculares en población adulta.
+
+### **7.8. Variable objetivo: Diagnóstico de diabetes**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_objetivo <- df_viz %>%
+  count(Diabetes_binary) %>%                
+  mutate(
+    `Porcentaje (%)` = round(n / sum(n) * 100, 2)
+  ) %>%
+  rename(Frecuencia = n)
+
+tabla_objetivo
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+df %>%
+  count(Diabetes_binary) %>%
+  mutate(
+    pct = 100 * n / sum(n),
+    Diabetes_binary = factor(Diabetes_binary,
+                             labels = c("Sin diabetes", "Prediabetes / Diabetes"))
+  ) %>%
+  ggplot(aes(x = Diabetes_binary, y = n)) +
+  geom_col(fill = c("#E2A8A4", "#56D8CB")) +
+  geom_text(aes(label = sprintf("%.1f%%", pct)), vjust = -0.3) +
+  labs(
+    title = "Diagnóstico de diabetes en la población",
+    x = "Estado de diabetes",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+La variable Diagnóstico de Diabetes, que constituye el desenlace principal del estudio, muestra que el 13.93% (n = 35,346) de los individuos presenta diagnóstico de diabetes, mientras que el 86.07% (n = 218,334) no reporta esta condición.
+
+Desde una perspectiva epidemiológica, la prevalencia observada resulta consistente con patrones poblacionales de diabetes mellitus tipo 2 en población adulta, especialmente en contextos donde predominan grupos etarios intermedios y avanzados, como se evidenció previamente en la distribución por edad del dataset.
+
+## **8. Análisis bivariado**
+
+El análisis bivariado busca explorar la relación entre dos variables con el fin de identificar asociaciones, diferencias significativas o patrones conjuntos de comportamiento. Dependiendo del tipo de variables (numéricas o categóricas), se emplean herramientas como gráficos comparativos, medidas de correlación o pruebas estadísticas. Esta etapa permite evaluar posibles relaciones relevantes para el fenómeno estudiado y aporta evidencia preliminar sobre vínculos que podrían ser profundizados en modelos explicativos posteriores.
+
+### **8.1 Variable objetivo vs variables categóricas (binarias)**
+
+#### **8.1.1 Objetivo vs HighBP**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz$HighBP)
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_pct <- cbind(tabla_pct, Total = 100)
+
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+chi_test <- chisq.test(tabla_base)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+  
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+La tabla de contingencia evidencia una asociación clara entre la presencia de hipertensión y el diagnóstico de prediabetes/diabetes. En el grupo con **Prediabetes / Diabetes**, el 75.27% presenta hipertensión, mientras que solo el 24.73% no la presenta. En contraste, dentro del grupo **Sin diabetes**, el porcentaje con hipertensión disminuye considerablemente al 37.66%, siendo mayoritario el grupo sin hipertensión (62.34%).
+
+Desde el punto de vista estadístico, la prueba de independencia Chi-cuadrado arroja un estadístico de **χ² = 17562.45** con un p-valor < 0.001 (reportado como 0.0 por redondeo computacional), lo que indica que existe evidencia estadísticamente significativa para rechazar la hipótesis nula de independencia entre las variables. En consecuencia, se concluye que la presencia de hipertensión está significativamente asociada con el diagnóstico de prediabetes/diabetes en la muestra analizada.
+
+Adicionalmente, el Odds Ratio **(OR = 5.04)** indica que las probabilidades de presentar prediabetes/diabetes son aproximadamente cinco veces mayores en individuos con hipertensión en comparación con aquellos sin hipertensión. Este valor cuantifica la magnitud de la asociación y confirma que no solo existe significancia estadística, esperable dada la gran muestra, sino también una relación fuerte desde el punto de vista epidemiológico.
+
+En consecuencia, se concluye que la hipertensión constituye un factor significativamente asociado al estado diabético en la muestra analizada, consolidándose como una condición estrechamente vinculada al riesgo metabólico.
+
+
+```{r, fig.width=10, fig.height=8}
+
+tabla_pct <- prop.table(table(df_viz$Diabetes_binary, df_viz$HighBP), margin = 1) * 100
+
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz$HighBP)
+
+plot_pct <- as.data.frame(tabla_pct) %>%
+  rename(
+    Diabetes_binary = Var1,
+    `Hipertensión` = Var2,
+    Porcentaje = Freq
+  )
+
+plot_abs <- as.data.frame(tabla_abs) %>%
+  rename(
+    Diabetes_binary = Var1,
+    `Hipertensión` = Var2,
+    Frecuencia = Freq
+  )
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = `Hipertensión`)) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 4
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según hipertensión",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = "Hipertensión"
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = `Hipertensión`)) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 4
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según hipertensión",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = "Hipertensión"
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+#p1 / p2 + plot_layout(heights = c(1.1, 1))
+# tu código p1, p2 y patchwork
+p1 / p2 + plot_layout(heights = c(1.4, 1.4))
+
+```
+
+#### **8.1.2 Objetivo vs HighChol**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz$HighChol)
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_pct <- cbind(tabla_pct, Total = 100)
+
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+chi_test <- chisq.test(tabla_base)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+  
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+La tabla de contingencia evidencia una diferencia sustancial en la distribución del colesterol alto según el estado diabético. Dentro del grupo con **Prediabetes / Diabetes**, el 67.01% presenta colesterol alto, mientras que el 32.99% no lo presenta. En contraste, en el grupo Sin **diabetes**, solo el 38.43% presenta colesterol alto y el 61.57% no lo presenta.
+
+Esta diferencia porcentual sugiere una asociación relevante entre ambas condiciones metabólicas. La prueba Chi-cuadrado de independencia arroja un estadístico de **χ² = 10174.07**, con 1 grado de libertad y un p-valor < 0.001 (reportado como 0.0 por redondeo computacional). Dado que el p-valor es significativamente menor al nivel de significancia convencional (α = 0.05), se rechaza la hipótesis nula de independencia.
+
+Adicionalmente, el Odds Ratio **(OR = 3.25)** indica que las probabilidades de presentar prediabetes/diabetes son aproximadamente 3.25 veces mayores en individuos con colesterol alto en comparación con aquellos sin colesterol alto. Este valor cuantifica la magnitud de la asociación y evidencia que no solo existe significancia estadística, esperable dada la gran muestra, sino también una relación de magnitud moderada a fuerte desde el punto de vista epidemiológico.
+
+En consecuencia, se concluye que el colesterol alto se encuentra significativamente asociado con la presencia de prediabetes/diabetes en la muestra analizada, en línea con la evidencia epidemiológica que vincula dislipidemias y trastornos metabólicos.
+
+
+```{r, fig.width=10, fig.height=8}
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz$HighChol)
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+plot_pct <- as.data.frame(tabla_pct) %>%
+  rename(
+    Diabetes_binary = Var1,
+    `Colesterol alto` = Var2,
+    Porcentaje = Freq
+  )
+
+plot_abs <- as.data.frame(tabla_abs) %>%
+  rename(
+    Diabetes_binary = Var1,
+    `Colesterol alto` = Var2,
+    Frecuencia = Freq
+  )
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = `Colesterol alto`)) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 4
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según colesterol alto",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = "Colesterol alto"
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = `Colesterol alto`)) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 4
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según colesterol alto",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = "Colesterol alto"
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+p1 / p2 + plot_layout(heights = c(1.1, 1))
+```
+
+#### **8.1.3 Objetivo vs CholCheck**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+variable <- "CholCheck"
+
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz[[variable]])
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+cat("Tabla de contingencia (Frecuencia y % por fila)\n")
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+chi_test <- chisq.test(tabla_abs[, -ncol(tabla_abs)])
+
+cat("\nChi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+La tabla de contingencia evidencia diferencias claras en la realización del **chequeo de colesterol** en los últimos cinco años según el estado diabético. En el grupo con **Prediabetes / Diabetes**, el 99.32% reporta haberse realizado un chequeo de colesterol, mientras que solo el 0.68% no lo ha hecho. En contraste, dentro del grupo **Sin diabetes**, el 95.77% se ha realizado el chequeo y el 4.23% no lo ha hecho.
+
+Aunque en ambos grupos el porcentaje de chequeo es alto, la diferencia relativa entre quienes no se realizan el examen es notablemente mayor en el grupo sin diabetes. Desde el punto de vista estadístico, la prueba de independencia Chi-cuadrado arroja un estadístico de **χ² = 1062.94**, con 1 grado de libertad y un p-valor < 0.001, lo que indica evidencia estadísticamente significativa para rechazar la hipótesis nula de independencia entre las variables.
+
+Adicionalmente, el Odds Ratio **(OR = 6.43)** indica que las probabilidades relativas de pertenecer al grupo con prediabetes/diabetes son aproximadamente 6.4 veces mayores en quienes se han realizado un chequeo de colesterol en comparación con quienes no lo han hecho. Este resultado no implica causalidad, sino que probablemente refleja un mayor contacto con el sistema de salud y mayor vigilancia clínica en personas ya diagnosticadas o en riesgo metabólico.
+
+En consecuencia, se concluye que existe una asociación estadísticamente significativa entre la realización del chequeo de colesterol y el estado diabético en la muestra analizada. No obstante, la interpretación debe hacerse con cautela, dado que el chequeo es una conducta preventiva influenciada por diagnóstico previo y seguimiento médico, más que un factor de riesgo en sí mismo.
+
+```{r, fig.width=10, fig.height=8}
+plot_pct <- as.data.frame(as.table(tabla_pct))
+names(plot_pct) <- c("Diabetes_binary", variable, "Porcentaje")
+
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+plot_abs <- as.data.frame(as.table(tabla_base))
+names(plot_abs) <- c("Diabetes_binary", variable, "Frecuencia")
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 4
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según chequeo de colesterol",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = variable
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 4
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según chequeo de colesterol",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = variable
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+p1 / p2 + plot_layout(heights = c(1.1, 1))
+```
+
+#### **8.1.4 Objetivo vs Smoker**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+variable <- "Smoker"
+
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz[[variable]])
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+cat("Tabla de contingencia (Frecuencia y % por fila)\n")
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+chi_test <- chisq.test(tabla_base)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+  
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+La tabla de contingencia muestra diferencias en la distribución del hábito de fumar según el estado diabético. En el grupo con **Prediabetes / Diabetes**, el 51.82% reporta ser fumador, mientras que el 48.18% no fuma. En contraste, en el grupo **Sin diabetes**, el 43.10% es fumador y el 56.90% no lo es.
+
+Esta diferencia porcentual sugiere una mayor proporción de fumadores dentro del grupo con alteraciones metabólicas. Desde el punto de vista estadístico, la prueba de independencia Chi-cuadrado arroja un estadístico de **χ² =** 937.06, con 1 grado de libertad y un p-valor < 0.001, lo que indica evidencia estadísticamente significativa para rechazar la hipótesis nula de independencia entre el hábito de fumar y el estado diabético.
+
+Adicionalmente, el Odds Ratio **(OR = 1.42)** indica que las probabilidades de presentar prediabetes/diabetes son aproximadamente 1.42 veces mayores en fumadores en comparación con no fumadores. Aunque la magnitud del efecto es moderada, la asociación es consistente y estadísticamente robusta, lo cual es esperable dada la gran muestra analizada.
+
+En consecuencia, se concluye que existe una asociación estadísticamente significativa entre el hábito de fumar y la presencia de prediabetes/diabetes en la muestra. Desde una perspectiva epidemiológica, este resultado es coherente con la literatura que vincula el tabaquismo con alteraciones metabólicas, inflamación sistémica y mayor riesgo de enfermedades crónicas.
+
+```{r, fig.width=10, fig.height=8}
+plot_pct <- as.data.frame(as.table(tabla_pct))
+names(plot_pct) <- c("Diabetes_binary", variable, "Porcentaje")
+
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+plot_abs <- as.data.frame(as.table(tabla_base))
+names(plot_abs) <- c("Diabetes_binary", variable, "Frecuencia")
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3.7
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según fumador",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = variable
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 3.7
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según fumador",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = variable
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+p1 / p2 + plot_layout(heights = c(1.1, 1))
+```
+
+#### **8.1.5 Objetivo vs HeartDiseaseorAttack**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+variable <- "HeartDiseaseorAttack"
+
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz[[variable]])
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+cat("Tabla de contingencia (Frecuencia y % por fila)\n")
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+chi_test <- chisq.test(tabla_base)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+  
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+
+La tabla de contingencia evidencia una diferencia marcada en la prevalencia de enfermedad cardíaca o antecedente de infarto según el estado diabético. En el grupo con **Prediabetes / Diabetes**, el 22.29% reporta presentar enfermedad cardíaca, mientras que el 77.71% no la presenta. En contraste, dentro del grupo **Sin diabetes**, solo el 7.34% presenta enfermedad cardíaca y el 92.66% no la presenta.
+
+Esta diferencia porcentual es sustancial y sugiere una fuerte asociación entre ambas condiciones. Desde el punto de vista estadístico, la prueba de independencia Chi-cuadrado arroja un estadístico de **χ² = 7971.16**, con 1 grado de libertad y un p-valor < 0.001, lo que proporciona evidencia contundente para rechazar la hipótesis nula de independencia entre la presencia de enfermedad cardíaca y el estado diabético.
+
+Adicionalmente, el Odds Ratio **(OR = 3.62)** indica que las probabilidades de presentar prediabetes/diabetes son aproximadamente 3.6 veces mayores en individuos con enfermedad cardíaca o antecedente de infarto en comparación con aquellos sin esta condición. Este valor refleja una asociación de magnitud moderada a fuerte desde el punto de vista epidemiológico.
+
+En consecuencia, se concluye que existe una asociación estadísticamente significativa y clínicamente relevante entre la presencia de enfermedad cardiovascular y el diagnóstico de prediabetes/diabetes en la muestra analizada. Este resultado es coherente con la literatura médica, que reconoce la diabetes como un factor de riesgo mayor para enfermedad cardiovascular y, a su vez, la coexistencia frecuente de ambas condiciones dentro del síndrome metabólico.
+
+```{r, fig.width=10, fig.height=8}
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+
+plot_pct <- as.data.frame(as.table(tabla_pct))
+names(plot_pct) <- c("Diabetes_binary", variable, "Porcentaje")
+
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+plot_abs <- as.data.frame(as.table(tabla_base))
+names(plot_abs) <- c("Diabetes_binary", variable, "Frecuencia")
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3.7
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según enfermedad coronaria/infarto",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = variable
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 3.7
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según enfermedad coronaria/infarto",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = variable
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+p1 / p2 + plot_layout(heights = c(1.1, 1))
+```
+
+#### **8.1.6 Objetivo vs PhysActivity**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+variable <- "PhysActivity"
+
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz[[variable]])
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+cat("Tabla de contingencia (Frecuencia y % por fila)\n")
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+chi_test <- chisq.test(tabla_base)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+  
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+La tabla de contingencia muestra diferencias claras en la práctica de actividad física según el estado diabético. En el grupo con **Prediabetes / Diabetes**, el 63.05% reporta realizar actividad física, mientras que el 36.95% no la realiza. En contraste, dentro del grupo **Sin diabetes**, el 77.69% realiza actividad física y el 22.31% no lo hace.
+
+Estas diferencias porcentuales sugieren que la inactividad física es más frecuente en el grupo con alteraciones metabólicas. Desde el punto de vista estadístico, la prueba de independencia Chi-cuadrado arroja un estadístico de **χ² = 3539.42**, con 1 grado de libertad y un p-valor < 0.001, lo que proporciona evidencia suficiente para rechazar la hipótesis nula de independencia entre la actividad física y el estado diabético.
+
+Adicionalmente, el Odds Ratio **(OR = 0.49)** indica que las probabilidades de presentar prediabetes/diabetes son aproximadamente 51% menores en individuos que realizan actividad física en comparación con aquellos que no la realizan. Un OR menor que 1 sugiere un efecto protector de la actividad física frente a la presencia de alteraciones metabólicas.
+
+En consecuencia, se concluye que existe una asociación estadísticamente significativa y clínicamente relevante entre la práctica de actividad física y el estado diabético en la muestra analizada. Este hallazgo es consistente con la evidencia epidemiológica, que reconoce la actividad física como un factor protector frente al desarrollo de diabetes tipo 2 y otras alteraciones metabólicas.
+
+```{r, fig.width=10, fig.height=8}
+plot_pct <- as.data.frame(as.table(tabla_pct))
+names(plot_pct) <- c("Diabetes_binary", variable, "Porcentaje")
+
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+plot_abs <- as.data.frame(as.table(tabla_base))
+names(plot_abs) <- c("Diabetes_binary", variable, "Frecuencia")
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3.7
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según actividad física",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = variable
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 3.7
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según actividad física",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = variable
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+p1 / p2 + plot_layout(heights = c(1.1, 1))
+```
+
+#### **8.1.7 Objetivo vs Fruits**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+variable <- "Fruits"
+
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz[[variable]])
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+cat("Tabla de contingencia (Frecuencia y % por fila)\n")
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+chi_test <- chisq.test(tabla_base)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+  
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+La tabla de contingencia muestra diferencias en el consumo diario de frutas según el estado diabético. En el grupo con **Prediabetes / Diabetes**, el 58.54% reporta consumir frutas diariamente, mientras que el 41.46% no lo hace. En contraste, en el grupo **Sin diabetes**, el 64.22% consume frutas diariamente y el 35.78% no lo hace.
+
+Estas diferencias sugieren que el no consumo diario de frutas es ligeramente más frecuente en el grupo con alteraciones metabólicas. Desde el punto de vista estadístico, la prueba de independencia Chi-cuadrado arroja un estadístico de **χ² = 421.61**, con 1 grado de libertad y un p-valor < 0.001, lo que indica que existe evidencia estadísticamente significativa para rechazar la hipótesis nula de independencia entre el consumo de frutas y el estado diabético.
+
+Adicionalmente, el Odds Ratio **(OR = 0.79)** indica que las probabilidades de presentar prediabetes/diabetes son aproximadamente 21% menores en individuos que consumen frutas diariamente en comparación con quienes no lo hacen. Al ser un OR menor que 1, sugiere un posible efecto protector leve asociado al consumo regular de frutas.
+
+Sin embargo, aunque la asociación es estadísticamente significativa, la magnitud del efecto es moderada a baja en comparación con otras variables analizadas (como hipertensión o enfermedad cardíaca). En consecuencia, el consumo diario de frutas parece estar asociado con menor presencia de alteraciones metabólicas, pero su impacto relativo es menos fuerte que otros factores cardiometabólicos evaluados.
+
+```{r, fig.width=10, fig.height=8}
+plot_pct <- as.data.frame(as.table(tabla_pct))
+names(plot_pct) <- c("Diabetes_binary", variable, "Porcentaje")
+
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+plot_abs <- as.data.frame(as.table(tabla_base))
+names(plot_abs) <- c("Diabetes_binary", variable, "Frecuencia")
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3.7
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según consumo de frutas diario",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = variable
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 3.7
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según consumo de frutas diario",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = variable
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+p1 / p2 + plot_layout(heights = c(1.1, 1))
+```
+
+#### **8.1.8 Objetivo vs Veggies**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+variable <- "Veggies"
+
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz[[variable]])
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+cat("Tabla de contingencia (Frecuencia y % por fila)\n")
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+chi_test <- chisq.test(tabla_base)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+  
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+La tabla de contingencia muestra diferencias en el consumo diario de verduras según el estado diabético. En el grupo con **Prediabetes / Diabetes**, el 75.64% reporta consumir verduras diariamente, mientras que el 24.36% no lo hace. En contraste, dentro del grupo Sin diabetes, el 82.03% consume verduras diariamente y el 17.97% no lo hace.
+
+Estas diferencias sugieren que el no consumo diario de verduras es más frecuente en el grupo con alteraciones metabólicas. Desde el punto de vista estadístico, la prueba de independencia Chi-cuadrado arroja un estadístico de **χ² = 811.81**, con 1 grado de libertad y un p-valor < 0.001, lo que indica evidencia estadísticamente significativa para rechazar la hipótesis nula de independencia entre el consumo de verduras y el estado diabético.
+
+Adicionalmente, el Odds Ratio **(OR = 0.68)** indica que las probabilidades de presentar prediabetes/diabetes son aproximadamente 32% menores en individuos que consumen verduras diariamente en comparación con quienes no lo hacen. Al ser un OR menor que 1, este resultado sugiere un efecto protector moderado asociado al consumo regular de verduras.
+
+En consecuencia, se concluye que existe una asociación estadísticamente significativa y epidemiológicamente relevante entre el consumo diario de verduras y la presencia de prediabetes/diabetes en la muestra analizada. Este hallazgo es coherente con la evidencia científica que vincula dietas ricas en vegetales con menor riesgo de alteraciones metabólicas y enfermedades crónicas.
+
+```{r, fig.width=10, fig.height=8}
+plot_pct <- as.data.frame(as.table(tabla_pct))
+names(plot_pct) <- c("Diabetes_binary", variable, "Porcentaje")
+
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+plot_abs <- as.data.frame(as.table(tabla_base))
+names(plot_abs) <- c("Diabetes_binary", variable, "Frecuencia")
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3.7
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según consumo de vegetales diario",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = variable
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 3.7
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según consumo de vegetales diario",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = variable
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+p1 / p2 + plot_layout(heights = c(1.1, 1))
+```
+
+#### **8.1.9 Objetivo vs HvyAlcoholConsump**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+variable <- "HvyAlcoholConsump"
+
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz[[variable]])
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+cat("Tabla de contingencia (Frecuencia y % por fila)\n")
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+chi_test <- chisq.test(tabla_base)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+  
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+La tabla de contingencia muestra diferencias en el consumo alto de alcohol según el estado diabético. En el grupo con **Prediabetes / Diabetes**, el 2.35% reporta consumo alto de alcohol, mientras que el 97.65% no presenta este patrón de consumo. En contraste, en el grupo Sin diabetes, el 6.15% reporta consumo alto de alcohol y el 93.85% no lo presenta.
+
+A simple vista, el consumo alto de alcohol parece ser menos frecuente en el grupo con alteraciones metabólicas. Desde el punto de vista estadístico, la prueba de independencia Chi-cuadrado arroja un estadístico de **χ² = 825.12**, con 1 grado de libertad y un p-valor < 0.001, lo que indica evidencia estadísticamente significativa para rechazar la hipótesis nula de independencia entre el consumo alto de alcohol y el estado diabético.
+
+Adicionalmente, el Odds Ratio **(OR = 0.37)**indica que las probabilidades de presentar prediabetes/diabetes son aproximadamente 63% menores en individuos con consumo alto de alcohol en comparación con aquellos que no presentan este patrón de consumo. Sin embargo, este resultado debe interpretarse con cautela. Un OR menor que 1 no implica necesariamente que el consumo alto de alcohol sea protector; más bien, podría reflejar factores de confusión, cambios en el comportamiento tras el diagnóstico (reducción del consumo después de ser diagnosticado) o sesgos asociados al autorreporte.
+
+En consecuencia, aunque existe una asociación estadísticamente significativa entre el consumo alto de alcohol y el estado diabético en la muestra analizada, la dirección aparente del efecto debe analizarse con prudencia desde el punto de vista epidemiológico y no debe interpretarse como un efecto protector causal.
+
+```{r, fig.width=10, fig.height=8}
+plot_pct <- as.data.frame(as.table(tabla_pct))
+names(plot_pct) <- c("Diabetes_binary", variable, "Porcentaje")
+
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+plot_abs <- as.data.frame(as.table(tabla_base))
+names(plot_abs) <- c("Diabetes_binary", variable, "Frecuencia")
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3.7
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según consumo alto de alcohol",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = variable
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 3.7
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según consumo alto de alcohol",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = variable
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+p1 / p2 + plot_layout(heights = c(1.1, 1))
+```
+
+#### **8.1.10 Objetivo vs AnyHealthcare**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+variable <- "AnyHealthcare"
+
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz[[variable]])
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+cat("Tabla de contingencia (Frecuencia y % por fila)\n")
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+chi_test <- chisq.test(tabla_base)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+  
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+La tabla de contingencia muestra diferencias leves en la cobertura médica según el estado diabético. En el grupo con **Prediabetes / Diabetes**, el 95.98% reporta contar con cobertura médica, mientras que el 4.02% no la tiene. En contraste, dentro del grupo **Sin diabetes**, el 94.96% tiene cobertura y el 5.04% no la tiene.
+
+Aunque la diferencia porcentual es pequeña (aproximadamente 1 punto porcentual), la prueba de independencia Chi-cuadrado arroja un estadístico de **χ² = 66.81**, con 1 grado de libertad y un p-valor < 0.001, lo que indica que la asociación es estadísticamente significativa. Sin embargo, dado el gran tamaño muestral, incluso diferencias pequeñas pueden resultar significativas desde el punto de vista estadístico.
+
+El Odds Ratio **(OR = 1.27)** indica que las probabilidades de presentar prediabetes/diabetes son aproximadamente 27% mayores en individuos con cobertura médica en comparación con quienes no la tienen. Este resultado no debe interpretarse como que la cobertura médica aumente el riesgo; más bien, probablemente refleja un mayor acceso al diagnóstico y al sistema de salud en personas que cuentan con cobertura, lo que incrementa la probabilidad de detección de la enfermedad.
+
+En consecuencia, aunque existe una asociación estadísticamente significativa entre la cobertura médica y el estado diabético en la muestra analizada, la magnitud del efecto es baja y su interpretación debe contextualizarse en términos de acceso a servicios de salud y detección oportuna, más que como un factor de riesgo causal.
+
+```{r, fig.width=10, fig.height=8}
+plot_pct <- as.data.frame(as.table(tabla_pct))
+names(plot_pct) <- c("Diabetes_binary", variable, "Porcentaje")
+
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+plot_abs <- as.data.frame(as.table(tabla_base))
+names(plot_abs) <- c("Diabetes_binary", variable, "Frecuencia")
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3.7
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según cobertura médica",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = variable
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 3.7
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según cobertura médica",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = variable
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+p1 / p2 + plot_layout(heights = c(1.1, 1))
+```
+
+#### **8.1.11 Objetivo vs NoDocbcCost**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+variable <- "NoDocbcCost"
+
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz[[variable]])
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+cat("Tabla de contingencia (Frecuencia y % por fila)\n")
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+chi_test <- chisq.test(tabla_base)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+  
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+La tabla de contingencia muestra diferencias en la presencia de barreras económicas para acceder a servicios médicos según el estado diabético. En el grupo con **Prediabetes / Diabetes**, el 10.59% reporta haber tenido una barrera económica para consultar al médico, mientras que el 89.41% no la reporta. En contraste, en el grupo **Sin diabetes**, el 8.07% presenta esta barrera y el 91.93% no la presenta.
+
+Estas diferencias sugieren que las barreras económicas para el acceso a la atención médica son ligeramente más frecuentes en el grupo con alteraciones metabólicas. Desde el punto de vista estadístico, la prueba de independencia Chi-cuadrado arroja un estadístico de **χ² = 250.31**, con 1 grado de libertad y un p-valor < 0.001, lo que indica que existe evidencia estadísticamente significativa para rechazar la hipótesis nula de independencia entre la presencia de barreras económicas y el estado diabético.
+
+El Odds Ratio **(OR = 1.35)** indica que las probabilidades de presentar prediabetes/diabetes son aproximadamente 35% mayores en individuos que reportan barreras económicas para acceder al médico, en comparación con aquellos que no las reportan. Aunque la magnitud del efecto es moderada, el resultado sugiere una asociación relevante desde el punto de vista social y estructural.
+
+En consecuencia, se concluye que existe una asociación estadísticamente significativa entre las barreras económicas en el acceso a la atención médica y el estado diabético en la muestra analizada. Este hallazgo puede reflejar desigualdades en el acceso a servicios preventivos y de control, lo que podría influir tanto en el diagnóstico oportuno como en el manejo adecuado de la enfermedad.
+
+```{r, fig.width=10, fig.height=8}
+plot_pct <- as.data.frame(as.table(tabla_pct))
+names(plot_pct) <- c("Diabetes_binary", variable, "Porcentaje")
+
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+plot_abs <- as.data.frame(as.table(tabla_base))
+names(plot_abs) <- c("Diabetes_binary", variable, "Frecuencia")
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3.7
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según barrera económica",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = variable
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 3.7
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según barrera económica",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = variable
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+p1 / p2 + plot_layout(heights = c(1.1, 1))
+```
+
+#### **8.1.12 Objetivo vs DiffWalk**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+variable <- "DiffWalk"
+
+tabla_abs <- table(df_viz$Diabetes_binary, df_viz[[variable]])
+
+tabla_pct <- prop.table(tabla_abs, margin = 1) * 100
+
+tabla_final <- matrix(
+  paste0(
+    tabla_abs,
+    " (",
+    round(tabla_pct, 2),
+    "%)"
+  ),
+  nrow = nrow(tabla_abs),
+  dimnames = dimnames(tabla_abs)
+)
+
+tabla_final <- as.data.frame(tabla_final)
+
+tabla_abs <- cbind(tabla_abs, Total = rowSums(tabla_abs))
+tabla_final$Total <- paste0(tabla_abs[, "Total"], " (100%)")
+
+cat("Tabla de contingencia (Frecuencia y % por fila)\n")
+tabla_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+
+chi_test <- chisq.test(tabla_base)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+if (all(dim(tabla_base) == c(2, 2))) {
+  
+  a <- tabla_base[1, 1]
+  b <- tabla_base[1, 2]
+  c <- tabla_base[2, 1]
+  d <- tabla_base[2, 2]
+  
+  odds_ratio <- (a * d) / (b * c)
+  cat("Odds Ratio (OR):", round(odds_ratio, 2), "\n")
+  
+} else {
+  cat("Odds Ratio no aplica (tabla mayor a 2x2)\n")
+}
+```
+
+La tabla de contingencia evidencia una diferencia marcada en la presencia de dificultad para caminar según el estado diabético. En el grupo con **Prediabetes / Diabetes**, el 37.12% reporta presentar dificultad al caminar, mientras que el 62.88% no la presenta. En contraste, dentro del grupo Sin diabetes, solo el 13.54% reporta dificultad al caminar y el 86.46% no presenta esta condición.
+
+La diferencia porcentual es considerable (más de 23 puntos porcentuales), lo que sugiere una asociación fuerte entre ambas variables. Desde el punto de vista estadístico, la prueba de independencia Chi-cuadrado arroja un estadístico de **χ² = 12092.32**, con 1 grado de libertad y un p-valor < 0.001, lo que indica evidencia altamente significativa para rechazar la hipótesis nula de independencia entre la dificultad para caminar y el estado diabético.
+
+Adicionalmente, el Odds Ratio **(OR = 3.77)** indica que las probabilidades de presentar prediabetes/diabetes son aproximadamente 3.8 veces mayores en individuos que reportan dificultad para caminar en comparación con quienes no la presentan. Este valor refleja una asociación de magnitud fuerte desde el punto de vista epidemiológico.
+
+En consecuencia, se concluye que existe una asociación estadísticamente significativa y clínicamente relevante entre la dificultad para caminar y el diagnóstico de prediabetes/diabetes en la muestra analizada. Este hallazgo es coherente con la literatura, ya que la diabetes se asocia frecuentemente con complicaciones como neuropatía periférica, alteraciones vasculares y limitaciones funcionales que pueden afectar la movilidad.
+
+```{r, fig.width=10, fig.height=8}
+plot_pct <- as.data.frame(as.table(tabla_pct))
+names(plot_pct) <- c("Diabetes_binary", variable, "Porcentaje")
+
+tabla_base <- tabla_abs[, -ncol(tabla_abs)]
+plot_abs <- as.data.frame(as.table(tabla_base))
+names(plot_abs) <- c("Diabetes_binary", variable, "Frecuencia")
+
+p1 <- ggplot(plot_abs, aes(x = Diabetes_binary, y = Frecuencia, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.0f", Frecuencia)),
+    position = position_dodge(width = 0.9),
+    vjust = -0.3,
+    size = 3.7
+  ) +
+  labs(
+    title = "Frecuencia absoluta de diagnóstico de diabetes según dificultad para caminar",
+    x = "Estado de diabetes",
+    y = "Cantidad de personas",
+    fill = variable
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(plot_pct, aes(x = Diabetes_binary, y = Porcentaje, fill = .data[[variable]])) +
+  geom_col(position = position_dodge(width = 0.9)) +
+  geom_text(
+    aes(label = sprintf("%.1f%%", Porcentaje)),
+    position = position_dodge(width = 0.9),
+    vjust = 0.5,
+    size = 3.7
+  ) +
+  labs(
+    title = "Proporción (%) de diagnóstico de diabetes según dificultad para caminar",
+    x = "Estado de diabetes",
+    y = "Porcentaje (%)",
+    fill = variable
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal()
+
+p1 / p2 + plot_layout(heights = c(1.1, 1))
+```
+
+### **8.2 Variable objetivo vs variables categóricas ordinales**
+
+#### **8.2.1 Objetivo vs GenHlth**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+genhlth_labels <- c(
+  "1" = "Excelente",
+  "2" = "Muy buena",
+  "3" = "Buena",
+  "4" = "Regular",
+  "5" = "Mala"
+)
+
+gen <- df_viz$GenHlth
+
+if (is.factor(gen) || is.character(gen)) {
+  inv_genhlth <- setNames(as.integer(names(genhlth_labels)), genhlth_labels)
+  gen_codes <- as.integer(inv_genhlth[as.character(gen)])
+} else {
+  gen_codes <- gen
+}
+
+tabla_abs <- table(gen_codes, df_viz$Diabetes_binary)
+tabla_abs <- tabla_abs[as.character(1:5), , drop = FALSE]
+
+total_general <- rowSums(tabla_abs)
+n_total <- sum(total_general)
+
+tabla_pct_col <- prop.table(tabla_abs, margin = 2) * 100
+pct_total <- (total_general / n_total) * 100
+
+no_col <- "Sin diabetes"
+si_col <- "Prediabetes / Diabetes"
+
+tabla_genhlth_final <- data.frame(
+  `Código` = 1:5,
+  `Descripción` = unname(genhlth_labels[as.character(1:5)]),
+  `Sin diabetes (N)` = as.integer(tabla_abs[, no_col]),
+  `Sin diabetes (%)` = round(as.numeric(tabla_pct_col[, no_col]), 2),
+  `Prediabetes/Diabetes (N)` = as.integer(tabla_abs[, si_col]),
+  `Prediabetes/Diabetes (%)` = round(as.numeric(tabla_pct_col[, si_col]), 2),
+  `Total (N)` = as.integer(total_general),
+  `Total (%)` = round(as.numeric(pct_total), 2),
+  check.names = FALSE
+)
+
+tabla_genhlth_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_chi <- table(gen_codes, df_viz$Diabetes_binary)
+
+chi_test <- chisq.test(tabla_chi)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+n <- sum(tabla_chi)
+
+cramers_v <- sqrt(as.numeric(chi_test$statistic) / (n * (min(dim(tabla_chi)) - 1)))
+
+cat("Cramér's V:", round(cramers_v, 3), "\n")
+```
+
+En ``GenHlth``, la distribución cambia fuerte entre grupos. En el grupo Sin diabetes, la mayor parte se concentra en categorías favorables: “Muy buena” (37.88%) y “Excelente” (20.23%), mientras que “Mala” representa solo 3.44%. En contraste, en Prediabetes/Diabetes la categoría más frecuente es “Buena” (38.07%), y aparecen proporciones mucho más altas en estados menos favorables: “Regular” (27.70%) y “Mala” (12.95%), mientras que “Excelente” baja a 3.23%. Esto evidencia un desplazamiento desde categorías “mejores” hacia categorías “peores” en quienes tienen prediabetes/diabetes.
+
+La prueba Chi-cuadrado de independencia arroja un estadístico ``χ² = 22 728.07`` con 4 grados de libertad y un p-valor < 0.001, lo que indica que existe una asociación estadísticamente significativa entre el estado de salud general (GenHlth) y la presencia de prediabetes/diabetes. En consecuencia, se rechaza la hipótesis nula de independencia entre las variables.
+
+El tamaño del efecto, medido mediante Cramér’s ``V = 0.299``, sugiere una asociación de magnitud moderada. Esto implica que la relación no solo es significativa por el gran tamaño muestral, sino que también presenta relevancia práctica.
+
+En términos sustantivos, la distribución muestra un desplazamiento claro: las personas con prediabetes/diabetes se concentran en mayor proporción en las categorías “Regular” y “Mala”, mientras que el grupo sin diabetes presenta mayor frecuencia en “Excelente” y “Muy buena”. En conjunto, la evidencia respalda que un peor estado de salud general se asocia de manera consistente con el estado diabético.
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+orden_gen <- c("Excelente", "Muy buena", "Buena", "Regular", "Mala")
+
+map_gen <- c(
+  "1" = "Excelente",
+  "2" = "Muy buena",
+  "3" = "Buena",
+  "4" = "Regular",
+  "5" = "Mala"
+)
+
+gen <- df_viz$GenHlth
+
+gen_num <- suppressWarnings(as.numeric(as.character(gen)))
+if (any(!is.na(gen_num))) {
+  gen <- ifelse(!is.na(gen_num), map_gen[as.character(gen_num)], as.character(gen))
+}
+
+gen <- factor(gen, levels = orden_gen)
+
+tabla_pct <- prop.table(table(gen, df_viz$Diabetes_binary), margin = 1) * 100
+tabla_pct <- tabla_pct[orden_gen, , drop = FALSE]
+
+tabla_long <- as.data.frame(as.table(tabla_pct))
+names(tabla_long) <- c("GenHlth", "Diabetes_binary", "Porcentaje")
+
+ggplot(tabla_long, aes(x = GenHlth, y = Porcentaje, fill = Diabetes_binary)) +
+  geom_col() +
+  geom_text(
+    aes(label = ifelse(Porcentaje >= 3, sprintf("%.1f%%", Porcentaje), "")),
+    position = position_stack(vjust = 0.5),
+    size = 3
+  ) +
+  labs(
+    title = "Distribución porcentual de diabetes según salud general",
+    x = "Salud general (orden ordinal)",
+    y = "Porcentaje dentro de cada categoría (%)",
+    fill = "Estado de diabetes"
+  ) +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_minimal() +
+  theme(
+    panel.grid.major.x = element_blank()
+  )
+```
+
+#### **8.2.2 Objetivo vs Age**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+age_labels <- c(
+  "1" = "18–24", "2" = "25–29", "3" = "30–34", "4" = "35–39",
+  "5" = "40–44", "6" = "45–49", "7" = "50–54", "8" = "55–59",
+  "9" = "60–64", "10" = "65–69", "11" = "70–74", "12" = "75–79", "13" = "80+"
+)
+
+age_inverse <- setNames(as.integer(names(age_labels)), gsub("–", "-", age_labels))
+age_inverse <- c(age_inverse, setNames(as.integer(names(age_labels)), age_labels))
+
+age_col <- df_viz$Age
+
+if (is.numeric(age_col)) {
+  df_viz$Age_code <- as.integer(age_col)
+} else {
+  age_str <- trimws(gsub("–", "-", as.character(age_col), fixed = FALSE))
+  df_viz$Age_code <- as.integer(age_inverse[age_str])
+}
+
+tabla_abs <- table(df_viz$Age_code, df_viz$Diabetes_binary)
+tabla_abs <- tabla_abs[order(as.numeric(rownames(tabla_abs))), , drop = FALSE]
+
+tabla_pct <- prop.table(tabla_abs, margin = 2) * 100
+
+total_abs <- rowSums(tabla_abs)
+total_pct <- (total_abs / sum(total_abs)) * 100
+
+col_no <- "Sin diabetes"
+col_si <- "Prediabetes / Diabetes"
+
+codigos <- as.integer(rownames(tabla_abs))
+
+salida <- data.frame(
+  `Código` = codigos,
+  `Descripción` = unname(age_labels[as.character(codigos)]),
+  `Sin diabetes (N)` = as.integer(if (col_no %in% colnames(tabla_abs)) tabla_abs[, col_no] else rep(0, length(codigos))),
+  `Sin diabetes (%)` = round(as.numeric(if (col_no %in% colnames(tabla_pct)) tabla_pct[, col_no] else rep(0, length(codigos))), 2),
+  `Prediabetes/Diabetes (N)` = as.integer(if (col_si %in% colnames(tabla_abs)) tabla_abs[, col_si] else rep(0, length(codigos))),
+  `Prediabetes/Diabetes (%)` = round(as.numeric(if (col_si %in% colnames(tabla_pct)) tabla_pct[, col_si] else rep(0, length(codigos))), 2),
+  `Total (N)` = as.integer(total_abs),
+  `Total (%)` = round(as.numeric(total_pct), 2),
+  check.names = FALSE
+)
+
+salida
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_chi <- table(df_viz$Age_code, df_viz$Diabetes_binary)
+tabla_chi <- tabla_chi[order(as.numeric(rownames(tabla_chi))), , drop = FALSE]
+
+chi_test <- chisq.test(tabla_chi)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+n <- sum(tabla_chi)
+k <- min(dim(tabla_chi)) - 1
+cramers_v <- if (k > 0) sqrt(as.numeric(chi_test$statistic) / (n * k)) else NaN
+
+cat("Cramér's V:", round(cramers_v, 3), "\n")
+```
+
+En relación con la variable grupo de ``edad``, la distribución descriptiva evidencia un incremento progresivo en la proporción de individuos con prediabetes/diabetes a medida que aumenta la edad. Mientras que en los grupos más jóvenes (18–24 y 25–29) la frecuencia de casos es considerablemente baja, a partir de los 45 años se observa un aumento sostenido, alcanzando sus valores más elevados entre los 60 y 74 años, donde la proporción de individuos con condición diabética supera ampliamente la observada en edades tempranas. 
+
+La prueba de independencia Chi-cuadrado confirmó que esta asociación es estadísticamente significativa ``(χ²=8795.05; gl=12; p<0.001)``. Asimismo, el tamaño del efecto medido mediante Cramér’s V ``(V=0.186)`` indica una asociación de magnitud pequeña a moderada, lo que sugiere que, aunque la edad no determina por sí sola el estado diabético, sí constituye un factor estructural relevante en su distribución poblacional.
+ 
+Estos resultados son coherentes con la evidencia epidemiológica que identifica el envejecimiento como un determinante importante del riesgo de diabetes tipo 2.
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+age_labels <- c(
+  "1" = "18–24", "2" = "25–29", "3" = "30–34", "4" = "35–39",
+  "5" = "40–44", "6" = "45–49", "7" = "50–54", "8" = "55–59",
+  "9" = "60–64", "10" = "65–69", "11" = "70–74",
+  "12" = "75–79", "13" = "80+"
+)
+
+tabla_pct <- prop.table(table(df_viz$Age_code, df_viz$Diabetes_binary), margin = 1) * 100
+tabla_pct <- tabla_pct[order(as.numeric(rownames(tabla_pct))), , drop = FALSE]
+
+tabla_long <- as.data.frame(as.table(tabla_pct))
+names(tabla_long) <- c("Age_code", "Diabetes_binary", "Porcentaje")
+
+tabla_long$Age_code <- as.integer(as.character(tabla_long$Age_code))
+tabla_long$Grupo_edad <- unname(age_labels[as.character(tabla_long$Age_code)])
+
+tabla_long$Grupo_edad <- factor(
+  tabla_long$Grupo_edad,
+  levels = unname(age_labels[as.character(sort(unique(tabla_long$Age_code)))])
+)
+
+ggplot(tabla_long, aes(y = Grupo_edad, x = Porcentaje, fill = Diabetes_binary)) +
+  geom_col() +
+  geom_text(
+    aes(label = ifelse(Porcentaje > 3, sprintf("%.1f%%", Porcentaje), "")),
+    position = position_stack(vjust = 0.5),
+    size = 3
+  ) +
+  labs(
+    title = "Distribución porcentual de diabetes según grupo de edad",
+    x = "Porcentaje dentro de cada grupo (%)",
+    y = "Grupo de edad",
+    fill = "Estado de diabetes"
+  ) +
+  coord_cartesian(xlim = c(0, 100)) +
+  theme_minimal() +
+  theme(
+    panel.grid.major.y = element_blank()
+  )
+```
+
+#### **8.2.3 Objetivo vs Education**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+education_order <- c(
+  "Nunca asistió",
+  "Primaria incompleta",
+  "Secundaria incompleta",
+  "Secundaria completa / GED",
+  "Universidad incompleta",
+  "Universidad completa"
+)
+
+edu <- df_viz$Education
+
+edu <- factor(as.character(edu), levels = education_order, ordered = TRUE)
+
+tabla_abs <- table(edu, df_viz$Diabetes_binary)
+tabla_abs <- tabla_abs[education_order, , drop = FALSE]
+
+total_general <- rowSums(tabla_abs)
+n_total <- sum(total_general)
+
+tabla_pct_col <- prop.table(tabla_abs, margin = 2) * 100
+
+pct_total <- (total_general / n_total) * 100
+
+no_col <- "Sin diabetes"
+si_col <- "Prediabetes / Diabetes"
+
+codigos <- 1:length(education_order)
+
+tabla_edu_final <- data.frame(
+  `Código` = codigos,
+  `Descripción` = education_order,
+  `Sin diabetes (N)` = as.integer(tabla_abs[, no_col]),
+  `Sin diabetes (%)` = round(as.numeric(tabla_pct_col[, no_col]), 2),
+  `Prediabetes/Diabetes (N)` = as.integer(tabla_abs[, si_col]),
+  `Prediabetes/Diabetes (%)` = round(as.numeric(tabla_pct_col[, si_col]), 2),
+  `Total (N)` = as.integer(total_general),
+  `Total (%)` = round(as.numeric(pct_total), 2),
+  check.names = FALSE
+)
+
+tabla_edu_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_chi <- table(df_viz$Education, df_viz$Diabetes_binary)
+
+chi_test <- chisq.test(tabla_chi)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+n <- sum(tabla_chi)
+
+cramers_v <- sqrt(as.numeric(chi_test$statistic) / (n * (min(dim(tabla_chi)) - 1)))
+
+cat("Cramér's V:", round(cramers_v, 3), "\n")
+```
+
+En cuanto al ``nivel educativo``, la distribución descriptiva muestra un gradiente claro en la proporción de prediabetes/diabetes según el nivel de formación. Aunque la mayoría de los casos absolutos se concentran en los niveles de secundaria completa/GED, universidad incompleta y universidad completa, lo cual es consistente con la mayor representación poblacional de estos grupos, al observar las proporciones se evidencia que los niveles educativos más bajos presentan una mayor carga relativa de enfermedad en comparación con los niveles superiores. 
+
+La prueba de independencia Chi-cuadrado confirmó que existe una asociación estadísticamente significativa entre nivel educativo y estado diabético ``(χ² = 4027.11; gl = 5; p < 0.001)``. No obstante, el tamaño del efecto medido mediante Cramér’s V ``(V = 0.126)`` indica una asociación de magnitud pequeña, lo que sugiere que, si bien la educación está relacionada con la distribución de la diabetes en la población, su influencia es moderada y probablemente interactúa con otros determinantes socioeconómicos y conductuales. Estos resultados son coherentes con la evidencia que señala la educación como un determinante social de la salud, asociado indirectamente a mejores ingresos, acceso a servicios sanitarios y estilos de vida más saludables.
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+education_order <- c(
+  "Nunca asistió",
+  "Primaria incompleta",
+  "Secundaria incompleta",
+  "Secundaria completa / GED",
+  "Universidad incompleta",
+  "Universidad completa"
+)
+
+tabla_pct <- prop.table(table(df_viz$Education, df_viz$Diabetes_binary), margin = 1) * 100
+tabla_pct <- tabla_pct[education_order, , drop = FALSE]
+
+tabla_long <- as.data.frame(as.table(tabla_pct))
+names(tabla_long) <- c("Education", "Diabetes_binary", "Porcentaje")
+
+tabla_long$Education <- factor(tabla_long$Education, levels = education_order)
+
+ggplot(tabla_long, aes(y = Education, x = Porcentaje, fill = Diabetes_binary)) +
+  geom_col() +
+  geom_text(
+    aes(label = ifelse(Porcentaje > 3, sprintf("%.1f%%", Porcentaje), "")),
+    position = position_stack(vjust = 0.5),
+    size = 3
+  ) +
+  labs(
+    title = "Distribución porcentual de diabetes según nivel educativo",
+    x = "Porcentaje dentro de cada nivel educativo (%)",
+    y = NULL,
+    fill = "Estado de diabetes"
+  ) +
+  coord_cartesian(xlim = c(0, 100)) +
+  theme_minimal()
+```
+
+#### **8.2.4 Objetivo vs Income**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+income_order <- c(
+  "< $10,000",
+  "$10,000–15,000",
+  "$15,000–20,000",
+  "$20,000–25,000",
+  "$25,000–35,000",
+  "$35,000–50,000",
+  "$50,000–75,000",
+  "$75,000+"
+)
+
+inc <- df_viz$Income
+
+inc <- factor(as.character(inc), levels = income_order, ordered = TRUE)
+
+tabla_abs <- table(inc, df_viz$Diabetes_binary)
+tabla_abs <- tabla_abs[income_order, , drop = FALSE]
+
+total_general <- rowSums(tabla_abs)
+n_total <- sum(total_general)
+
+tabla_pct_col <- prop.table(tabla_abs, margin = 2) * 100
+
+pct_total <- (total_general / n_total) * 100
+
+no_col <- "Sin diabetes"
+si_col <- "Prediabetes / Diabetes"
+
+codigos <- 1:length(income_order)
+
+tabla_income_final <- data.frame(
+  `Código` = codigos,
+  `Descripción` = income_order,
+  `Sin diabetes (N)` = as.integer(tabla_abs[, no_col]),
+  `Sin diabetes (%)` = round(as.numeric(tabla_pct_col[, no_col]), 2),
+  `Prediabetes/Diabetes (N)` = as.integer(tabla_abs[, si_col]),
+  `Prediabetes/Diabetes (%)` = round(as.numeric(tabla_pct_col[, si_col]), 2),
+  `Total (N)` = as.integer(total_general),
+  `Total (%)` = round(as.numeric(pct_total), 2),
+  check.names = FALSE
+)
+
+tabla_income_final
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_chi_income <- table(df_viz$Income, df_viz$Diabetes_binary)
+
+chi_test <- chisq.test(tabla_chi_income)
+
+cat("Chi-cuadrado:", round(chi_test$statistic, 2), "\n")
+cat("Grados de libertad:", chi_test$parameter, "\n")
+cat("p-valor:", chi_test$p.value, "\n")
+
+n <- sum(tabla_chi_income)
+
+cramers_v <- sqrt(as.numeric(chi_test$statistic) / 
+                  (n * (min(dim(tabla_chi_income)) - 1)))
+
+cat("Cramér's V:", round(cramers_v, 3), "\n")
+```
+
+En relación con el ``nivel de ingreso``, la distribución descriptiva evidencia un patrón consistente con un gradiente socioeconómico en la prevalencia de prediabetes/diabetes. Aunque los mayores números absolutos de casos se concentran en los grupos de ingresos medios y altos, debido a su mayor representación dentro de la muestra, al analizar las proporciones se observa que los niveles de ingreso más bajos presentan una mayor carga relativa de enfermedad en comparación con los niveles más altos. Esta tendencia sugiere que a medida que aumenta el ingreso, la proporción de individuos con condición diabética tiende a disminuir. 
+
+La prueba de independencia Chi-cuadrado confirmó que existe una asociación estadísticamente significativa entre nivel de ingreso y estado diabético ``(χ² = 7003.72; gl = 7; p < 0.001)``. Asimismo, el tamaño del efecto medido mediante Cramér’s V ``(V = 0.166)`` indica una asociación de magnitud pequeña a moderada, lo que sugiere que el ingreso constituye un determinante relevante, aunque no exclusivo, en la distribución poblacional de la diabetes. Estos resultados son coherentes con la literatura que identifica el nivel socioeconómico como un determinante estructural de la salud, vinculado a acceso a servicios sanitarios, calidad de la alimentación y oportunidades de actividad física.
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+income_order <- c(
+  "< $10,000",
+  "$10,000–15,000",
+  "$15,000–20,000",
+  "$20,000–25,000",
+  "$25,000–35,000",
+  "$35,000–50,000",
+  "$50,000–75,000",
+  "$75,000+"
+)
+
+tabla_pct <- prop.table(table(df_viz$Income, df_viz$Diabetes_binary), margin = 1) * 100
+tabla_pct <- tabla_pct[income_order, , drop = FALSE]
+
+tabla_long <- as.data.frame(as.table(tabla_pct))
+names(tabla_long) <- c("Income", "Diabetes_binary", "Porcentaje")
+
+tabla_long$Income <- factor(tabla_long$Income, levels = income_order)
+
+ggplot(tabla_long, aes(y = Income, x = Porcentaje, fill = Diabetes_binary)) +
+  geom_col() +
+  geom_text(
+    aes(label = ifelse(Porcentaje > 3, sprintf("%.1f%%", Porcentaje), "")),
+    position = position_stack(vjust = 0.5),
+    size = 3
+  ) +
+  labs(
+    title = "Distribución porcentual de diabetes según nivel de ingreso",
+    x = "Porcentaje dentro de cada nivel de ingreso (%)",
+    y = NULL,
+    fill = "Estado de diabetes"
+  ) +
+  coord_cartesian(xlim = c(0, 100)) +
+  theme_minimal()
+```
+
+### **8.3 Variable objetivo vs variables numéricas**
+
+Con el fin de evaluar la relación entre el estado de prediabetes/diabetes y las variables numéricas del estudio (BMI, MentHlth y PhysHlth), se realizó un análisis bivariado orientado a comparar la distribución y las medias de dichas variables entre los dos grupos definidos por la variable objetivo: Prediabetes/Diabetes y Sin diabetes.
+
+Dado que la variable dependiente es categórica binaria y las variables explicativas son continuas, el análisis se estructuró a partir de la comparación de medias entre grupos independientes. Para ello, se utilizó la prueba t de Welch, la cual no asume igualdad de varianzas entre grupos y resulta apropiada en contextos donde los tamaños muestrales son desiguales.
+
+Si bien algunas de las variables presentan asimetría en su distribución, el tamaño muestral elevado garantiza la robustez de la prueba t por efecto del Teorema del Límite Central, el cual establece que la distribución de la media muestral tiende a aproximarse a la normalidad cuando el número de observaciones es grande.
+
+Adicionalmente, para complementar la significancia estadística, se calculó el tamaño del efecto mediante el estadístico Cohen’s d, con el objetivo de evaluar la magnitud práctica de las diferencias observadas entre grupos. Esta medida permite distinguir entre diferencias estadísticamente significativas y diferencias clínicamente relevantes.
+
+Finalmente, el análisis se apoyó en representaciones gráficas (boxplots y curvas de densidad) que permiten visualizar la dispersión, la presencia de valores atípicos y la forma de la distribución en cada grupo, proporcionando una comprensión más completa del comportamiento de las variables numéricas según el estado diabético.m
+
+#### **8.3.1 Objetivo vs BMI**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_descriptiva <- function(var) {
+
+  resumen <- df_viz %>%
+    dplyr::group_by(Diabetes_binary) %>%
+    dplyr::summarise(
+      N = sum(!is.na(.data[[var]])),
+      Media = mean(.data[[var]], na.rm = TRUE),
+      Mediana = median(.data[[var]], na.rm = TRUE),
+      `Desv. Estándar` = sd(.data[[var]], na.rm = TRUE),
+      Mínimo = min(.data[[var]], na.rm = TRUE),
+      `Q1 (25%)` = quantile(.data[[var]], 0.25, na.rm = TRUE),
+      `Q3 (75%)` = quantile(.data[[var]], 0.75, na.rm = TRUE),
+      Máximo = max(.data[[var]], na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  resumen[,-1] <- round(resumen[,-1], 2)
+
+  resumen
+}
+
+tabla_descriptiva("BMI")
+```
+
+El índice de masa corporal `(BMI)` es mayor en el grupo con Prediabetes / Diabetes (Media = 31.94; Mediana = 31) en comparación con el grupo Sin diabetes (Media = 27.81; Mediana = 27). Además, los cuartiles muestran que toda la distribución del grupo diabético está desplazada hacia valores más altos.
+
+La prueba t de Welch arroja un estadístico `t = 99.92` con p < 0.001, lo que indica que la diferencia de medias es estadísticamente significativa.
+
+El tamaño del efecto ``(Cohen’s d = 0.60)`` sugiere una diferencia de magnitud moderada, lo que implica que la asociación no solo es significativa por el gran tamaño muestral, sino también relevante desde el punto de vista práctico.
+
+En consecuencia, el BMI presenta una diferencia clara y sustantiva entre ambos grupos, consolidándose como una variable fuertemente asociada al estado diabético.
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(gridExtra)
+p1 <- ggplot(df_viz, aes(x = Diabetes_binary, y = BMI)) +
+  geom_boxplot(fill = c("#E2A8A4","#56D8CB"), color = "black") +
+  labs(
+    title = "Boxplot - BMI",
+    x = "Estado de diabetes",
+    y = "BMI"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+p2 <- ggplot(df_viz, aes(x = BMI, fill = Diabetes_binary)) +
+  geom_density(alpha = 0.4) +
+  labs(
+    title = "Distribución - BMI",
+    x = "BMI",
+    fill = "Estado de diabetes"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+El boxplot muestra que el grupo con Prediabetes / Diabetes presenta una mediana de BMI claramente superior al grupo Sin diabetes. Además: el rango intercuartílico (Q1–Q3) está desplazado hacia valores más altos; se observa también mayor concentración de valores elevados. Ambos grupos presentan outliers altos, pero en el grupo diabético la distribución central ya se encuentra en un rango de sobrepeso/obesidad. Esto indica una diferencia estructural en la distribución, no solo en valores extremos.
+
+La curva de densidad confirma visualmente el desplazamiento hacia la derecha del grupo con Prediabetes / Diabetes. La distribución azul (diabéticos) está centrada en valores más altos. Existe solapamiento entre grupos, pero el pico principal del grupo diabético se ubica aproximadamente 3–4 puntos de BMI por encima. De igual forma, se observa una cola derecha más pronunciada en el grupo diabético, indicando mayor proporción de IMC elevados.
+
+Ambos gráficos evidencian que el BMI no solo difiere en promedio, sino que toda la distribución del grupo con prediabetes/diabetes está desplazada hacia valores mayores. Esto refuerza la evidencia estadística previa (t-test y Cohen’s d) y confirma que el BMI es una variable fuertemente asociada al estado diabético tanto en términos estadísticos como clínicos.
+
+#### **8.3.2 Objetivo vs MentHlth**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_descriptiva("MentHlth")
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+grupo1 <- df_viz %>%
+  dplyr::filter(Diabetes_binary == "Prediabetes / Diabetes") %>%
+  dplyr::pull(MentHlth)
+
+grupo0 <- df_viz %>%
+  dplyr::filter(Diabetes_binary == "Sin diabetes") %>%
+  dplyr::pull(MentHlth)
+
+t_test <- t.test(grupo1, grupo0, var.equal = FALSE)
+
+pooled_sd <- sqrt((sd(grupo1, na.rm = TRUE)^2 + sd(grupo0, na.rm = TRUE)^2) / 2)
+cohens_d <- (mean(grupo1, na.rm = TRUE) - mean(grupo0, na.rm = TRUE)) / pooled_sd
+
+cat("t:", round(t_test$statistic, 2), "\n")
+cat("p-valor:", t_test$p.value, "\n")
+cat("Cohen's d:", round(cohens_d, 2), "\n")
+```
+
+El número promedio de días con ``mala salud mental`` en los últimos 30 días es mayor en el grupo con Prediabetes / Diabetes (Media = 4.46) en comparación con el grupo Sin diabetes (Media = 2.98). Sin embargo, la mediana en ambos grupos es 0 días, lo que indica que más de la mitad de los individuos en cada grupo no reportó días de mala salud mental, evidenciando una distribución fuertemente asimétrica hacia la derecha.
+
+Desde el punto de vista estadístico, la prueba t arroja ``t = 29.69`` con p < 0.001, lo que indica que la diferencia de medias es estadísticamente significativa. No obstante, el tamaño del efecto es pequeño ``(Cohen’s d = 0.18)``, lo que sugiere que, aunque la diferencia existe y es estadísticamente robusta (probablemente influenciada por el gran tamaño muestral), la magnitud práctica de la diferencia entre grupos es baja.
+
+En conclusión, existe una asociación estadísticamente significativa entre salud mental y estado diabético, pero su impacto en términos de magnitud es limitado.
+
+```{r, fig.width=12, fig.height=5, echo=FALSE}
+library(ggplot2)
+library(gridExtra)
+p1 <- ggplot(df_viz, aes(x = Diabetes_binary, y = MentHlth)) +
+  geom_boxplot(fill = c("#E2A8A4","#56D8CB"), color = "black") +
+  labs(
+    title = "Boxplot - MentHlth",
+    x = "Estado de diabetes",
+    y = "MentHlth"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+p2 <- ggplot(df_viz, aes(x = MentHlth, fill = Diabetes_binary)) +
+  geom_density(alpha = 0.4) +
+  labs(
+    title = "Distribución - MentHlth",
+    x = "MentHlth",
+    fill = "Estado de diabetes"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+Las gráficas muestran que la mayoría de las personas en ambos grupos reporta 0 días de mala salud mental, lo que explica que la mediana sea 0 y que la distribución esté fuertemente concentrada en ese valor. Sin embargo, el grupo con Prediabetes / Diabetes presenta una ligera mayor dispersión y una cola derecha más extendida, reflejando que una proporción mayor acumula más días con afectación mental.
+
+El boxplot confirma que, aunque las diferencias centrales no son muy amplias, el grupo diabético tiene un rango intercuartílico ligeramente superior y mayor presencia de valores altos. La curva de densidad muestra un desplazamiento leve hacia la derecha en este grupo, pero con amplio solapamiento entre distribuciones.
+
+En conjunto, visualmente se aprecia una diferencia existente pero pequeña en magnitud, coherente con el tamaño de efecto bajo observado en el análisis estadístico.m
+
+#### **8.3m.3 Objetivo vs PhysHlth**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+tabla_descriptiva("PhysHlth")
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+grupo1 <- df_viz %>%
+  dplyr::filter(Diabetes_binary == "Prediabetes / Diabetes") %>%
+  dplyr::pull(PhysHlth)
+
+grupo0 <- df_viz %>%
+  dplyr::filter(Diabetes_binary == "Sin diabetes") %>%
+  dplyr::pull(PhysHlth)
+
+t_test <- t.test(grupo1, grupo0, var.equal = FALSE)
+
+pooled_sd <- sqrt((sd(grupo1, na.rm = TRUE)^2 + sd(grupo0, na.rm = TRUE)^2) / 2)
+cohens_d <- (mean(grupo1, na.rm = TRUE) - mean(grupo0, na.rm = TRUE)) / pooled_sd
+
+cat("t:", round(t_test$statistic, 2), "\n")
+cat("p-valor:", t_test$p.value, "\n")
+cat("Cohen's d:", round(cohens_d, 2), "\n")
+```
+
+El número promedio de días con ``mala salud física`` en los últimos 30 días es considerablemente mayor en el grupo con Prediabetes / Diabetes (Media = 7.95; Mediana = 1) frente al grupo Sin diabetes (Media = 3.64; Mediana = 0). Además, el tercer cuartil es mucho más alto en el grupo diabético (Q3 = 15 vs 2), lo que indica que una proporción importante reporta múltiples días con afectación física.
+
+La prueba t de Welch arroja ``t = 68.97`` con p < 0.001, evidenciando una diferencia estadísticamente significativa entre grupos. El tamaño del efecto ``(Cohen’s d = 0.44)`` es moderado, lo que sugiere que la diferencia no solo es significativa por el gran tamaño muestral, sino también relevante en términos prácticos.
+
+En conjunto, la mala salud física muestra una asociación clara y sustantiva con el estado diabético, con una magnitud mayor que la observada previamente para salud mental.
+
+```{r, fig.width=12, fig.height=5, echo=FALSE}
+library(ggplot2)
+library(gridExtra)
+p1 <- ggplot(df_viz, aes(x = Diabetes_binary, y = PhysHlth)) +
+  geom_boxplot(fill = c("#E2A8A4","#56D8CB"), color = "black") +
+  labs(
+    title = "Boxplot - PhysHlth",
+    x = "Estado de diabetes",
+    y = "PhysHlth"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+p2 <- ggplot(df_viz, aes(x = BMI, fill = Diabetes_binary)) +
+  geom_density(alpha = 0.4) +
+  labs(
+    title = "Distribución - PhysHlth",
+    x = "PhysHlth",
+    fill = "Estado de diabetes"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+
+```
+
+Las gráficas muestran una diferencia más marcada que en salud mental. Aunque en ambos grupos la mediana se mantiene cerca de 0 días, el boxplot evidencia que el grupo con Prediabetes / Diabetes tiene un rango intercuartílico mucho más amplio y valores centrales más elevados. El tercer cuartil alcanza 15 días en el grupo diabético frente a solo 2 días en el grupo sin diabetes, lo que indica que una proporción considerable reporta múltiples días con mala salud física.
+
+La distribución confirma este patrón: la curva del grupo diabético está más extendida hacia la derecha y presenta una cola más pesada, reflejando mayor frecuencia de valores altos (incluyendo el límite de 30 días). Aunque existe solapamiento entre grupos, el desplazamiento es visualmente claro.
+
+En conjunto, las gráficas refuerzan que la afectación física es sustancialmente mayor en personas con prediabetes/diabetes, coherente con el tamaño de efecto moderado observado en el análisis estadístico.
+
+## **9. Análisis de correlación entre la variable objetivo y factores asociados**
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+df_corr <- df_viz %>%
+  mutate(
+    # Variable objetivo 0/1
+    Diabetes = recode(Diabetes_binary,
+                      "Sin diabetes" = 0,
+                      "Prediabetes / Diabetes" = 1) %>% as.numeric(),
+    
+    BMI = BMI,
+    MentHlth = MentHlth,
+    PhysHlth = PhysHlth,
+    
+    GenHlth = as.numeric(GenHlth),
+    Education = as.numeric(Education),
+    Income = as.numeric(Income),
+    Age = as.numeric(Age)
+  ) %>%
+
+  select(Diabetes, BMI, MentHlth, PhysHlth,
+         GenHlth, Education, Income, Age) %>%
+  
+  drop_na()
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+corr_matrix <- cor(df_corr, method = "spearman", use = "complete.obs")
+
+round(corr_matrix, 2)
+```
+
+```{r,echo=FALSE, warning=FALSE, message=FALSE}
+corr_long <- melt(corr_matrix)
+
+ggplot(corr_long, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  
+  geom_text(aes(label = sprintf("%.2f", value)), size = 3) +
+  
+  scale_fill_gradient2(
+    low = "blue",
+    mid = "white",
+    high = "red",
+    midpoint = 0,
+    name = "Spearman"
+  ) +
+  
+  coord_fixed() +   
+  
+  labs(
+    title = ,
+    x = NULL,
+    y = NULL
+  ) +
+  
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+La matriz de correlación de Spearman evidencia asociaciones monotónicas coherentes con la literatura epidemiológica. El estado diabético presenta una correlación positiva con el índice de masa corporal (ρ=0.23), la edad (ρ=0.18) y la salud general autopercibida (ρ=0.29), indicando que peores condiciones físicas y mayor edad se asocian con mayor prevalencia de diabetes. Asimismo, se observan correlaciones negativas con el nivel educativo (ρ=-0.12) y el ingreso (ρ=-0.16), lo cual sugiere un gradiente socioeconómico en la distribución de la enfermedad. No se identificaron problemas severos de multicolinealidad entre variables explicativas.
