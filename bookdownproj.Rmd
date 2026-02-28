@@ -13,7 +13,6 @@ output:
       smoth_scroll : true
 ---
 
-# EDA
 
  <style>
  h2{color: darkblue; }
@@ -3382,3 +3381,16 @@ ggplot(corr_long, aes(x = Var1, y = Var2, fill = value)) +
 ```
 
 La matriz de correlación de Spearman evidencia asociaciones monotónicas coherentes con la literatura epidemiológica. El estado diabético presenta una correlación positiva con el índice de masa corporal (ρ=0.23), la edad (ρ=0.18) y la salud general autopercibida (ρ=0.29), indicando que peores condiciones físicas y mayor edad se asocian con mayor prevalencia de diabetes. Asimismo, se observan correlaciones negativas con el nivel educativo (ρ=-0.12) y el ingreso (ρ=-0.16), lo cual sugiere un gradiente socioeconómico en la distribución de la enfermedad. No se identificaron problemas severos de multicolinealidad entre variables explicativas.
+
+
+<!--chapter:end:index.Rmd-->
+
+# The pool of tears
+
+
+<!--chapter:end:02-tears.Rmd-->
+
+# A caucus-race and a long tale
+
+<!--chapter:end:03-race.Rmd-->
+
