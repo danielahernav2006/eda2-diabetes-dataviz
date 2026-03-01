@@ -74,5 +74,3 @@ objetivo-vs-bmi
 objetivo-vs-menthlth
 m.3-objetivo-vs-physhlth
 análisis-de-correlación-entre-la-variable-objetivo-y-factores-asociados
-the-pool-of-tears
-a-caucus-race-and-a-long-tale
