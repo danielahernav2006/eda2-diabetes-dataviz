@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
 
 ``` 
 
-## **1. Contexto del dataset**
+## **1. Contextooooo del dataset**
 
 La diabetes es una de las enfermedades crónicas más prevalentes en los Estados Unidos y representa un problema significativo de salud pública a nivel mundial. Se trata de una condición metabólica caracterizada por la incapacidad del organismo para regular adecuadamente los niveles de glucosa en sangre, ya sea por deficiencia en la producción de insulina o por resistencia a su acción. Esta alteración puede derivar en complicaciones graves como enfermedades cardiovasculares, insuficiencia renal, pérdida de visión y amputaciones, afectando considerablemente la calidad y esperanza de vida de los pacientes.
 
