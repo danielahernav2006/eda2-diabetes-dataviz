@@ -1,5 +1,5 @@
 --- 
-title: "**Análisis Exploratorio de Indicadores de Salud y Factores Asociados a la Diabetes en la Encuesta BRFSS 2015**"
+title: "** BB Análisis Exploratorio de Indicadores de Salud y Factores Asociados a la Diabetes en la Encuesta BRFSS 2015**"
 author: "Daniela Hernández Navas & Valeria Incer Vergara"
 date: "2026-02-27"
 site: bookdown::bookdown_site
